@@ -24,3 +24,5 @@ chmod +x $folder_path/scripts/*.sh
 
 find "$folder_path/." -type f -name "*.sh" -exec sed -i "s|dxtools_path=\"/opt/dxtools\"|dxtools_path=\"$folder_path\"|g" {} \;
 
+$folder_path/dx.sh config init
+$folder_path/dx.sh config show

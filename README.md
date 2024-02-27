@@ -14,11 +14,17 @@ chmod +x ./install.sh
 ./install.sh
 ```
 
+Restart your terminal
+
+Now you have dx command available 
+
 This allows you to install the tools under /opt/dxtools, you can change the instalation path if needed.
 
+## reset configuration init
 
-Next step if to run the configuration for the user, start by making an initialization, to move the defaults to your user path.
+T0 run the configuration for the user, start by making an initialization, to move the defaults to your user path.
 
 ```bash
 dx config init
 ```
+

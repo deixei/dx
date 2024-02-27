@@ -2,11 +2,8 @@
 home_dir=$(echo ~)
 dxtools_path="/opt/dxtools"
 script_dir=$(dirname "$0")
-
 exporting_vars="$home_dir/.dx/exporting_vars.sh"
 config_file="$home_dir/.dx/config.ini"
-
-
 # Define some colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -34,13 +31,13 @@ usage() {
   print_warning "### DX tools - CONFIG - CLI helper ###"
   echo
   print_info "Usage: $0 [options] [command]"
-  echo 
+  echo
   print_info "Options:"
   echo "  -h, --help      Show this help message and exit"
-  echo "  -s, --show      Show the current configuration" 
+  echo "  -s, --show      Show the current configuration"
   echo "  -k, --key       The key to set"
   echo "  -v, --value     The value to set"
-  echo 
+  echo
   print_info "Commands:"
   echo "  init            Create the user configuration file"
   echo "  show            Show the default and current user configuration"
@@ -57,7 +54,7 @@ usage() {
   echo
   print_info "Configuration file: $config_file"
   echo
-  echo " source ~/.dx/exporting_vars.sh" 
+  echo " source ~/.dx/exporting_vars.sh"
 
 }
 
@@ -89,13 +86,12 @@ set_bashrc() {
   fi
 }
 
-
 # Read the configuration file
 # ignore empty lines and lines starting with #
 read_init_config() {
     # The first argument to the function is the display_values flag
     local display_values="$1"
-    
+
     # check if the file exists
     if [[ ! -f "$config_file" ]]; then
       print_error "Configuration file not found: $config_file"
@@ -120,7 +116,7 @@ read_init_config() {
       # Construct the export variable name
       var_name="${key}"
       var_name=$(echo "$var_name" | tr '[:lower:]' '[:upper:]')
-      
+
       # If the flag is true, display the value
       if [[ "$display_values" == "true" ]]; then
         echo "$var_name: '$value'"
@@ -130,7 +126,6 @@ read_init_config() {
       export $var_name=$value
     done < <(cat "$config_file"; echo)
 }
-
 
 # Function to get a value from the config.ini file
 get_value() {
@@ -206,8 +201,8 @@ az_config() {
   echo "secret: $secret"
 
   az login --service-principal -u $client -p $secret --tenant $tenant
-  
-  }
+
+}
 
 generate_service_principal() {
     # Replace with your own values
@@ -227,7 +222,7 @@ generate_service_principal() {
 
     # Print the values for verification
     echo "$APP_ID"
-    echo "$CLIENT_SECRET" 
+    echo "$CLIENT_SECRET"
     echo "$TENANT_ID"
 
     write_config_setting "${name}azure_tenant" "$TENANT_ID"
@@ -251,31 +246,31 @@ main() {
         -k|--key)
           key_arg=$2
           shift
-          ;;               
+          ;;
         -v|--value)
           value_arg=$2
           shift
-          ;; 
+          ;;
         -n|--name)
           name_arg=$2
           shift
-          ;; 
+          ;;
         -e|--email)
           email_arg=$2
           shift
-          ;;                     
+          ;;
         -t|--tenant)
           tenant_arg=$2
           shift
-          ;; 
+          ;;
         -c|--client)
           client_arg=$2
           shift
-          ;; 
+          ;;
         -s|--secret)
           secret_arg=$2
           shift
-          ;;                               
+          ;;
         *)
           command=$1
           ;;
@@ -306,9 +301,9 @@ main() {
           mkdir -p $home_dir/.dx
           cp -r $script_dir/../.dx/* $home_dir/.dx
           chmod +x $home_dir/.dx/*.sh
-          
+
           cat_config
-          
+
           set_bashrc
           ;;
         sp)
@@ -331,7 +326,7 @@ main() {
               exit 1
           fi
 
-          write_config_setting "$key_arg" "$value_arg"  
+          write_config_setting "$key_arg" "$value_arg"
 
           cat_config
           ;;
@@ -340,7 +335,7 @@ main() {
             # load the configuration
             if [[ -f $exporting_vars ]]; then
               source $exporting_vars
-              
+
               #read_init_config false
             else
               print_error "Configuration file not found: $exporting_vars"
@@ -352,10 +347,10 @@ main() {
                   print_error "Error: Missing azure_tenant in configuration file"
                   exit 1
               fi
-            else          
+            else
                 # update the git name in configuration file
                 write_config_setting "azure_tenant" "$tenant_arg"
-                AZURE_TENANT=$tenant_arg       
+                AZURE_TENANT=$tenant_arg
             fi
 
             if [[ -z "$client_arg" ]]; then
@@ -363,10 +358,10 @@ main() {
                   print_error "Error: Missing azure_client_id in configuration file"
                   exit 1
               fi
-            else          
+            else
                 # update the git email in configuration file
                 write_config_setting "azure_client_id" "$client_arg"
-                AZURE_CLIENT_ID=$client_arg       
+                AZURE_CLIENT_ID=$client_arg
             fi
 
             if [[ -z "$secret_arg" ]]; then
@@ -374,10 +369,10 @@ main() {
                   print_error "Error: Missing azure_client_secret in configuration file"
                   exit 1
               fi
-            else          
+            else
                 # update the git email in configuration file
                 write_config_setting "azure_client_secret" "$secret_arg"
-                AZURE_CLIENT_SECRET=$secret_arg       
+                AZURE_CLIENT_SECRET=$secret_arg
             fi
 
             az_config "$AZURE_TENANT" "$AZURE_CLIENT_ID" "$AZURE_CLIENT_SECRET"
@@ -397,10 +392,10 @@ main() {
                   print_error "Error: Missing git_name in configuration file"
                   exit 1
               fi
-            else          
+            else
                 # update the git name in configuration file
                 write_config_setting "git_name" "$name_arg"
-                GIT_NAME=$name_arg       
+                GIT_NAME=$name_arg
             fi
             echo "GIT_NAME: $GIT_NAME"
 
@@ -409,17 +404,17 @@ main() {
                   print_error "Error: Missing git_email in configuration file"
                   exit 1
               fi
-            else          
+            else
                 # update the git email in configuration file
                 write_config_setting "git_email" "$email_arg"
-                GIT_EMAIL=$email_arg       
+                GIT_EMAIL=$email_arg
             fi
             echo "GIT_EMAIL: $GIT_EMAIL"
 
 
             git_config "$GIT_NAME" "$GIT_EMAIL"
-            ;;    
-  
+            ;;
+
 
         *)
             print_error "Error: [$command] Unsupported command"
