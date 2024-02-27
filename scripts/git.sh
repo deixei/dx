@@ -6,8 +6,6 @@ script_dir=$(dirname "$0")
 exporting_vars="$home_dir/.dx/exporting_vars.sh"
 config_file="$home_dir/.dx/config.ini"
 
-repos_base_folder="$home_dir/repos"
-
 # Define some colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'

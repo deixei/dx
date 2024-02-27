@@ -5,6 +5,7 @@ dxtools_path="/opt/dxtools"
 script_dir=$(dirname "$0")
 exporting_vars="$home_dir/.dx/exporting_vars.sh"
 config_file="$home_dir/.dx/config.ini"
+ansible_collections_target_folder="$home_dir/.ansible/collections"
 # Define some colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -38,6 +39,42 @@ usage() {
   echo
   print_info "Commands:"
 
+}
+
+build_and_install(){
+  local folder=$1
+
+  temp_dir=$(mktemp -d)
+  temp_folder="$temp_dir/tempansible"
+
+  if [ ! -d "$temp_folder" ]; then
+      mkdir -p $temp_folder
+  fi
+
+  if [ -d "$folder" ]; then
+
+      cd $folder
+      ansible-galaxy collection build --force --output-path "$temp_folder"
+      
+      build_bin_file=$(find $temp_folder -name "*-1.*.tar.gz")
+      if [[ -f $build_bin_file ]]; then
+          ansible-galaxy collection install "$build_bin_file" --force -p "$ansible_collections_target_folder"
+          rm $build_bin_file
+      else
+          print_error "Error: File not found: $build_bin_file"
+      fi
+  else
+      print_error "This folder [$folder] does not exit."
+  fi  
+}
+
+
+search_galaxy_collection(){
+  
+  find . -name "galaxy.yml" -exec dirname {} \; | while read -r dir; do
+    print_info "Found: $dir"
+    #build_and_install $dir
+  done
 }
 
 command_show() {
