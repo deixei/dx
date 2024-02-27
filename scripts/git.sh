@@ -213,13 +213,11 @@ main() {
               generate_github_repo_url $project_arg $repo_arg
               exit 0
           fi
-          
+
           if [[ -n "$name_arg" ]]; then
             generate_dx_github_repo_url $name_arg
             exit 0
           fi
-
-
           ;;
 
         *)
