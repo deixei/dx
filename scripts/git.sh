@@ -5,6 +5,9 @@ dxtools_path="/opt/dxtools"
 script_dir=$(dirname "$0")
 exporting_vars="$home_dir/.dx/exporting_vars.sh"
 config_file="$home_dir/.dx/config.ini"
+
+repos_base_folder="$home_dir/repos"
+
 # Define some colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -53,6 +56,94 @@ command_show() {
   # TODO: Add more
 }
 
+
+command_git_clone() {
+
+  local repo_url=$1
+  local project_name=$2
+  local repo_name=$3
+
+  base_folder="$home_dir/repos/$project_name"
+
+  if [ ! -d "$base_folder" ]; then
+      mkdir -p $base_folder
+  fi
+
+  print_warning "Runing: [git clone $repo_url] into folder: [$base_folder]."
+
+  folder="$base_folder/$repo_name"
+  if [ ! -d "$folder" ]; then
+    git clone "$repo_url" "$base_folder"
+  else
+    print_info "The $folder folder already exists."
+  fi
+}
+
+cmd_github_clone() {
+  local repo_url=$1
+  # parse the repo url similar to https://github.com/deixei/factory.git into project_name and repo_name
+  # project_name=deixei
+  # repo_name=factory
+  project_name=$(echo $repo_url | awk -F'/' '{print $4}')
+  repo_name=$(echo $repo_url | awk -F'/' '{print $5}' | awk -F'.' '{print $1}')
+
+  print_info "Project name: $project_name"
+  print_info "Repo name: $repo_name"
+  print_info "Url: $repo_url"
+
+  command_git_clone $repo_url $project_name $repo_name
+}
+
+cmd_azure_clone(){
+  local repo_url=$1
+
+  project_name=$(echo $repo_url | awk -F'/' '{print $6}')
+  repo_name=$(echo $repo_url | awk -F'/' '{print $8}')
+
+  print_info "Project name: $project_name"
+  print_info "Repo name: $repo_name"
+  print_info "Url: $repo_url"
+
+  command_git_clone $repo_url $project_name $repo_name
+}
+
+generate_ado_repo_url(){
+  local project_name=$1
+  local repo_name=$2
+
+  # load the configuration
+  if [[ -f $exporting_vars ]]; then
+    source $exporting_vars
+  else
+    print_error "Configuration file not found: $exporting_vars"
+    exit 1
+  fi
+
+  echo "$DX_ADO_URL/$project_name/$repo_name/_git/$repo_name"
+}
+
+generate_github_repo_url(){
+  local project_name=$1
+  local repo_name=$2
+
+  echo "https://github.com/$project_name/$repo_name.git"
+}
+
+generate_dx_github_repo_url(){
+  local repo_name=$1
+
+  # load the configuration
+  if [[ -f $exporting_vars ]]; then
+    source $exporting_vars
+  else
+    print_error "Configuration file not found: $exporting_vars"
+    exit 1
+  fi
+
+  echo "$DX_GITHUB_URL/$repo_name.git"
+}
+
+
 main() {
     # Parse command line options
     while [[ $# -gt 0 ]]; do
@@ -65,6 +156,18 @@ main() {
           name_arg=$2
           shift
           ;;
+        -p|--project)
+          project_arg=$2
+          shift
+          ;;
+        -r|--repo)
+          repo_arg=$2
+          shift
+          ;;                  
+        -u|--url)
+          url_arg=$2
+          shift
+          ;;               
         *)
           command=$1
           ;;
@@ -86,14 +189,37 @@ main() {
 
           ;;
 
-        new)
+        clone)
           shift
-          if [[ -z "$name_arg" ]]; then
-              print_error "Error: Missing name argument (--name or -n)"
+          if [[ -n "$url_arg" ]]; then
+            echo "$url_arg"
+            # parse if is a github url or dev.azure.com url
+            # if is github, call cmd_github_clone
+            # if is dev.azure.com, call cmd_azure_clone
+
+            if [[ $url_arg == *"github.com"* ]]; then
+              cmd_github_clone $url_arg
+            elif [[ $url_arg == *"dev.azure.com"* ]]; then
+              cmd_azure_clone $url_arg
+            else
+              print_error "Error: Unsupported url: $url_arg"
               exit 1
+            fi
+            exit 0
           fi
 
-          echo "$name_arg"
+          if [[ -n "$project_arg" ]] && [[ -n "$repo_arg" ]]; then
+              generate_ado_repo_url $project_arg $repo_arg
+              generate_github_repo_url $project_arg $repo_arg
+              exit 0
+          fi
+          
+          if [[ -n "$name_arg" ]]; then
+            generate_dx_github_repo_url $name_arg
+            exit 0
+          fi
+
+
           ;;
 
         *)
