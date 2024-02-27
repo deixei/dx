@@ -1,12 +1,13 @@
 # dx
 Linux / Ubuntu command line for recurrent commands
 
-https://github.com/deixei/dx
-
+```bash
+git clone https://github.com/deixei/dx.git
+```
 
 ## Setup
 
-After downloading the repo, change permision for install.sh
+After downloading the repo, change permission for install.sh
 
 ```bash
 chmod +x ./install.sh
@@ -14,17 +15,38 @@ chmod +x ./install.sh
 ./install.sh
 ```
 
-Restart your terminal
+In case you are not running as root
 
-Now you have dx command available 
+```bash
+sudo ./install.sh --user_path /home/marcio
+```
 
-This allows you to install the tools under /opt/dxtools, you can change the instalation path if needed.
+If you need to change the installation folder
 
-## reset configuration init
+```bash
+sudo ./install.sh --tools_folder /folder/name
+```
 
-T0 run the configuration for the user, start by making an initialization, to move the defaults to your user path.
+Next run the user configuration init from the installation folder
+
+```bash
+/opt/dxtools/dx.sh config init
+```
+
+Restart your terminal, and now you have dx command available.
+
+## Reset configuration init
+
+To run the configuration for the user, start by making an initialization, to move the defaults to your user path.
 
 ```bash
 dx config init
 ```
 
+## Self updating
+
+By executing the update option you get the latest form the repo, this will break your default configuration.
+
+```bash
+dx --update
+```

@@ -88,6 +88,15 @@ usage() {
 
 }
 
+me() {
+  echo "I am $0"
+  echo "I am in $home_dir"
+  echo "I am user $(whoami)"
+  echo "I am in $(pwd)"
+  echo "I am running on $(uname -a)"
+  echo "I am using $(bash --version | head -n 1)"
+  
+}
 
 # Parse command line options
 if [[ $# -gt 0 ]]; then
@@ -142,6 +151,9 @@ case $command in
   ansible)
     shift
     $script_dir/scripts/ansible.sh "$@"
+    ;;
+  me)
+    me
     ;;
   *)
     print_error "Error: [$command] Unsupported command"

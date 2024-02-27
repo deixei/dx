@@ -1,6 +1,7 @@
 #!/bin/bash
 home_dir=$(echo ~)
 dxtools_path="/opt/dxtools"
+
 script_dir=$(dirname "$0")
 exporting_vars="$home_dir/.dx/exporting_vars.sh"
 config_file="$home_dir/.dx/config.ini"
@@ -146,6 +147,13 @@ delete_key() {
     awk -F '=' -v key="$key" '$1!=key' config.ini > temp && mv temp $config_file
 }
 
+init() {
+    echo "Creating configuration file: $config_file"
+    mkdir -p $home_dir/.dx
+    cp -r $dxtools_path/user_config/* $home_dir/.dx
+    chmod +x $home_dir/.dx/*.sh
+}
+
 write_config_setting() {
   local key="$1"
   local value="$2"
@@ -153,10 +161,7 @@ write_config_setting() {
   # Check if the file exists
   if [[ ! -f "$config_file" ]]; then
     echo "Configuration file not found: $config_file"
-    echo "Creating configuration file: $config_file"
-    mkdir -p $home_dir/.dx
-    cp -r $script_dir/../.dx/* $home_dir/.dx
-    chmod +x $home_dir/.dx/*.sh
+    init
   fi
 
   current_value=$(get_value "$key")
@@ -297,10 +302,7 @@ main() {
           ;;
         init)
           shift
-          print_info "Creating configuration files"
-          mkdir -p $home_dir/.dx
-          cp -r $script_dir/../.dx/* $home_dir/.dx
-          chmod +x $home_dir/.dx/*.sh
+          init
 
           cat_config
 
