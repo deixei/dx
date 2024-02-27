@@ -1,14 +1,37 @@
 #!/bin/bash
 home_dir=$(echo ~)
 dxtools_path="/opt/dxtools"
-
-
+user_config_path="$home_dir/.dx"
+script_dir=$(dirname "$0")
 folder_path="/tmp/repos/dxtools"
 
+# Define some colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No Color
+
+print_error() {
+  echo -e "${RED}$1${NC}"
+}
+
+print_success() {
+  echo -e "${GREEN}$1${NC}"
+}
+
+print_info() {
+  echo -e "${BLUE}$1${NC}"
+}
+
+print_warning() {
+  echo -e "${YELLOW}$1${NC}"
+}
+
 self_update() {
-    echo "Self updating..."
+    print_info "Self updating..."
     if [ -d "$folder_path" ]; then
-        echo "$folder_path exists."
+        print_error "$folder_path exists."
 
         cd $folder_path
         git checkout develop
@@ -16,7 +39,7 @@ self_update() {
 
         # run desired action
     else
-        echo "$folder_path does not exist."
+        print_error "$folder_path does not exist."
         mkdir -p $folder_path
 
         cd $folder_path
@@ -48,19 +71,23 @@ local_update_2_tools () {
 }
 
 usage() {
-  echo "### DX tools - CLI helper ###"
+  print_warning "### DX tools - CLI helper ###"
   echo
-  echo "Usage: $0 [options] [command]"
+  print_info "Usage: $0 [options] [command]"
   echo
-  echo "Options:"
+  print_info "Options:"
   echo "  -h, --help        Display this help message"
   echo "  -v, --version     Display script version"
   echo "  -u, --update      Self updates the code. Gets the latest version from the repo."
   echo
-  echo "Commands:"
+  print_info "Commands:"
   echo "  config            Config the dxtools (git and azure devops)"
-  echo "  azconfig          Config Azure service principle "
+  echo
+  print_info "More:"
+  echo "  http://www.deixei.com"
+
 }
+
 
 # Parse command line options
 if [[ $# -gt 0 ]]; then
@@ -70,7 +97,7 @@ if [[ $# -gt 0 ]]; then
       exit 0
       ;;
     -v|--version)
-      echo "DEIXEI(DX) 1.0.0"
+      print_warning "DEIXEI(DX) 1.0.0"
       exit 0
       ;;
     -u|--update)
@@ -102,22 +129,22 @@ fi
 case $command in
   config)
     shift
-    $dxtools_path/scripts/config.sh "$@"
+    $script_dir/scripts/config.sh "$@"
     ;;   
   git)
     shift
-    $dxtools_path/scripts/git.sh "$@"
+    $script_dir/scripts/git.sh "$@"
     ;;
   ado)
     shift
-    $dxtools_path/scripts/ado.sh "$@"
+    $script_dir/scripts/ado.sh "$@"
     ;;    
   ansible)
     shift
-    $dxtools_path/scripts/ansible.sh "$@"
+    $script_dir/scripts/ansible.sh "$@"
     ;;
   *)
-    echo "Error: [$command] Unsupported command"
+    print_error "Error: [$command] Unsupported command"
     usage
     exit 1
     ;;
