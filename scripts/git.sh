@@ -67,11 +67,11 @@ command_git_clone() {
       mkdir -p $base_folder
   fi
 
-  print_warning "Runing: [git clone $repo_url] into folder: [$base_folder]."
-
   folder="$base_folder/$repo_name"
+  print_warning "Runing: [git clone $repo_url] into folder: [$folder]."
+
   if [ ! -d "$folder" ]; then
-    git clone "$repo_url" "$base_folder"
+    git clone "$repo_url" "$folder"
   else
     print_info "The $folder folder already exists."
   fi
@@ -137,7 +137,7 @@ generate_dx_github_repo_url(){
     print_error "Configuration file not found: $exporting_vars"
     exit 1
   fi
-
+  
   echo "$DX_GITHUB_URL/$repo_name.git"
 }
 
@@ -213,7 +213,9 @@ main() {
           fi
 
           if [[ -n "$name_arg" ]]; then
-            generate_dx_github_repo_url $name_arg
+            url=$(generate_dx_github_repo_url $name_arg)
+            echo "Url: $url"
+            cmd_github_clone $url
             exit 0
           fi
           ;;
