@@ -44,6 +44,13 @@ usage() {
 build_and_install(){
   local folder=$1
 
+  # check that git is installed
+  if ! command -v ansible-galaxy &> /dev/null
+  then
+      print_error "ansible-galaxy is not installed"
+      exit 1
+  fi
+
   temp_dir=$(mktemp -d)
   temp_folder="$temp_dir/tempansible"
 
@@ -69,11 +76,15 @@ build_and_install(){
 }
 
 
+
 search_galaxy_collection(){
-  
-  find . -name "galaxy.yml" -exec dirname {} \; | while read -r dir; do
+  local action=$1  
+
+  find $home_dir -name "galaxy.yml" -exec dirname {} \; | while read -r dir; do
     print_info "Found: $dir"
-    #build_and_install $dir
+    if [[ $action == "build" ]]; then
+      build_and_install $dir
+    fi
   done
 }
 
@@ -117,6 +128,14 @@ main() {
 
     # Execute the command
     case $command in
+        track)
+          shift
+          search_galaxy_collection "show"
+          ;;
+        build)
+          shift
+          search_galaxy_collection "build"
+          ;;
         show)
           shift
           command_show
