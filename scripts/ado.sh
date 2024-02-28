@@ -16,6 +16,13 @@ usage() {
 
 }
 
+cmd_list_repos(){
+  print_warning "Get repos from project: $1"
+  az repos list --project "$1" --query "[].name" -o tsv | while read name; do
+    echo "Repository name: $name"
+  done
+}
+
 command_show() {
   print_info "Showing things"
   # load the configuration

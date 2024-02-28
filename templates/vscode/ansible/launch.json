@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Ansible Module: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args":[
+                "${fileDirname}/args/${fileBasenameNoExtension}.json"
+            ],
+            "console": "integratedTerminal",
+            "env": {
+                "AZURE_CLIENT_ID": "{{AZURE_CLIENT_ID}}",
+                "AZURE_SECRET": "{{AZURE_SECRET}}",
+                "AZURE_TENANT": "{{AZURE_TENANT}}",
+                "DEVOPS_PAT": "{{DEVOPS_PAT}}",
+                "AZURE_DEVOPS_EXT_PAT": "{{AZURE_DEVOPS_EXT_PAT}}",
+                "JIRA_USERNAME":"{{JIRA_USERNAME}}",
+                "JIRA_PASSWORD":"{{JIRA_PASSWORD}}",
+                "CMDB_USERNAME":"{{CMDB_USERNAME}}",
+                "CMDB_PASSWORD":"{{CMDB_PASSWORD}}"
+            }
+        }
+    ]
+}

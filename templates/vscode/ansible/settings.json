@@ -1,0 +1,17 @@
+{
+    "ansible.python.interpreterPath": "/root/.venv/devtools/bin/python3",
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "/root/repos/ansible",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "cSpell.words": [
+        "baseconfig",
+        "cmdb",
+        "opentelemetry"
+    ]
+}
