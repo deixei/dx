@@ -184,6 +184,10 @@ case $command in
     shift
     me
     ;;
+  az)
+    shift
+    $script_dir/scripts/azcli.sh "$@"
+    ;;
   venv)
     shift
       # if flag -v is passed, then define virtual environment
