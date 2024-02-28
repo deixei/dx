@@ -69,10 +69,12 @@ install_ansible() {
         #This script must be run as root
         python3 -m pip install ansible
         export PATH=$PATH:/root/.local/bin
+        export PYTHONPATH="${PYTHONPATH}:/root/.ansible/collections/ansible_collections"
     else
         python3 -m pip install --user ansible
         # add to PATH export PATH=$PATH:/home/marcio/.local/bin
         export PATH=$PATH:$home_dir/.local/bin
+        export PYTHONPATH="${PYTHONPATH}:$home_dir/.ansible/collections/ansible_collections"
     fi
 
 }
