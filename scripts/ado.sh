@@ -1,10 +1,7 @@
 #!/bin/bash
 subcommand="ado"
-home_dir=$(echo ~)
-dxtools_path="/opt/dxtools"
+
 script_dir=$(dirname "$0")
-exporting_vars="$home_dir/.dx/exporting_vars.sh"
-config_file="$home_dir/.dx/config.ini"
 source $script_dir/common.sh
 
 usage() {
@@ -22,12 +19,7 @@ usage() {
 command_show() {
   print_info "Showing things"
   # load the configuration
-  if [[ -f $exporting_vars ]]; then
-    source $exporting_vars
-  else
-    print_error "Configuration file not found: $exporting_vars"
-    exit 1
-  fi
+  load_config
 
   # TODO: Add more
 }

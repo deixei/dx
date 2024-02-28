@@ -1,4 +1,9 @@
 #!/bin/bash
+home_dir=$(echo ~)
+dxtools_path="/opt/dxtools"
+user_config_path="$home_dir/.dx"
+exporting_vars="$home_dir/.dx/exporting_vars.sh"
+config_file="$home_dir/.dx/config.ini"
 
 # Define some colors
 RED='\033[0;31m'
@@ -21,4 +26,13 @@ print_info() {
 
 print_warning() {
   echo -e "${YELLOW}$1${NC}"
+}
+
+load_config() {
+  if [[ -f $exporting_vars ]]; then
+    source $exporting_vars
+  else
+    print_error "Configuration file not found: $exporting_vars"
+    exit 1
+  fi
 }

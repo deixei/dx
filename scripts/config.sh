@@ -1,10 +1,5 @@
 #!/bin/bash
-home_dir=$(echo ~)
-dxtools_path="/opt/dxtools"
-
 script_dir=$(dirname "$0")
-exporting_vars="$home_dir/.dx/exporting_vars.sh"
-config_file="$home_dir/.dx/config.ini"
 source $script_dir/common.sh
 
 usage() {
@@ -314,14 +309,7 @@ main() {
         az)
             shift
             # load the configuration
-            if [[ -f $exporting_vars ]]; then
-              source $exporting_vars
-
-              #read_init_config false
-            else
-              print_error "Configuration file not found: $exporting_vars"
-              exit 1
-            fi
+            load_config
 
             if [[ -z "$tenant_arg" ]]; then
               if [[ -z "$AZURE_TENANT" ]]; then
@@ -361,12 +349,7 @@ main() {
         git)
             shift
 
-            if [[ -f $exporting_vars ]]; then
-              source $exporting_vars
-            else
-              print_error "Configuration file not found: $exporting_vars"
-              exit 1
-            fi
+            load_config
 
             if [[ -z "$name_arg" ]]; then
               if [[ -z "$GIT_NAME" ]]; then

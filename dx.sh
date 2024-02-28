@@ -1,11 +1,9 @@
 #!/bin/bash
-home_dir=$(echo ~)
-dxtools_path="/opt/dxtools"
-user_config_path="$home_dir/.dx"
-script_dir=$(dirname "$0")
-folder_path="/tmp/repos/dxtools"
 
+script_dir=$(dirname "$0")
 source $script_dir/scripts/common.sh
+
+folder_path="/tmp/repos/dxtools"
 
 self_update() {
     print_info "Self updating..."
@@ -177,6 +175,10 @@ case $command in
   install)
     shift
     $script_dir/scripts/install.sh "$@"
+    ;;
+  github)
+    shift
+    $script_dir/scripts/github.sh "$@"
     ;;
   me)
     shift
