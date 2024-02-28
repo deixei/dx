@@ -52,22 +52,25 @@ self_update() {
 
 }
 
+set_chmod() {
+  ## set permissins to execute all *.sh
+  chmod +x $dxtools_path/*.sh
+  chmod +x $dxtools_path/scripts/*.sh
+  chmod +x $dxtools_path/user_config/*.sh
+}
+
 repo_2_tools () {
   ## copy content of /tools to /opt/dxtools
   cp -r $folder_path/dx/* $dxtools_path
 
-  ## set permissins to execute all *.sh
-  chmod +x $dxtools_path/*.sh
-  chmod +x $dxtools_path/scripts/*.sh
+  set_chmod
 }
 
 local_update_2_tools () {
   ## copy content of /tools to $dxtools_path
   cp -r $home_dir/repos/deixei/dx/* $dxtools_path
 
-  ## set permissins to execute all *.sh
-  chmod +x $dxtools_path/*.sh
-  chmod +x $dxtools_path/scripts/*.sh
+  set_chmod
 }
 
 usage() {
@@ -82,6 +85,12 @@ usage() {
   echo
   print_info "Commands:"
   echo "  config            Config the dxtools (git and azure devops)"
+  echo "  git               Git helper"
+  echo "  ado               Azure DevOps helper"
+  echo "  ansible           Ansible helper"
+  echo "  install           Install developer tools"
+  echo "  me                Show information about the environment"
+  echo "  venv              Virtual environment helper (define virtual env -v, activate -a, deactivate -d)"
   echo
   print_info "More:"
   echo "  http://www.deixei.com"
@@ -96,6 +105,40 @@ me() {
   echo "I am running on $(uname -a)"
   echo "I am using $(bash --version | head -n 1)"
   
+}
+
+define_virtual_env() {
+    print_warning "Defining virtual environment: source ~/bin/dx/activate"
+    # check id the virtual environment exists
+    if [ ! -f "$home_dir/dx/bin/activate" ]; then
+        print_warning "Creating virtual environment"
+        python3 -m venv $home_dir/dx
+    else
+        print_warning "Virtual environment already exists"
+    fi
+  
+    source $home_dir/dx/bin/activate
+
+    # add to bashrc the source activation if not exists
+    if ! grep -q "source $home_dir/dx/bin/activate" $home_dir/.bashrc; then
+        print_info "Adding source activation to .bashrc"
+        echo "source $home_dir/dx/bin/activate" >> $home_dir/.bashrc
+    fi
+}
+
+activate_virtual_env() {
+    print_warning "Activating virtual environment: source ~/bin/dx/activate"
+    # if file exists, then activate virtual environment
+    if [ -f "$home_dir/dx/bin/activate" ]; then
+        source $home_dir/dx/bin/activate
+    else
+        print_error "Virtual environment does not exist"
+    fi
+}
+
+deactivate_virtual_env() {
+    print_warning "Deactivating virtual environment"
+    deactivate
 }
 
 # Parse command line options
@@ -152,8 +195,35 @@ case $command in
     shift
     $script_dir/scripts/ansible.sh "$@"
     ;;
+  install)
+    shift
+    $script_dir/scripts/install.sh "$@"
+    ;;
   me)
+    shift
     me
+    ;;
+  venv)
+    shift
+      # if flag -v is passed, then define virtual environment
+      # if flag -a is passed, then activate virtual environment
+      # if flag -d is passed, then deactivate virtual environment
+      case $1 in
+        -d)
+          deactivate_virtual_env
+        ;;
+        -v)
+          define_virtual_env
+        ;;
+        -a)
+          activate_virtual_env
+        ;;
+        *)
+          print_error "Error: [$command] Unsupported command"
+          usage
+          exit 1
+          ;;
+      esac
     ;;
   *)
     print_error "Error: [$command] Unsupported command"
