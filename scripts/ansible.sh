@@ -14,6 +14,8 @@ usage() {
   echo "  -h, --help      Show this help message and exit"
   echo
   print_info "Commands:"
+  echo "  find           Find ansible galaxy collections"
+  echo "  build          Build and install ansible galaxy collections"
 
 }
 
@@ -64,6 +66,75 @@ search_galaxy_collection(){
   done
 }
 
+cmd_run(){
+    local playbook_name="$1"
+    local inventory_path="$2"
+    local verbosity="$3"
+
+    if [[ -z "$inventory_path" ]]; then
+        inventory_path="inventories/development"
+    fi
+
+    if [[ -z "$playbook_name" ]]; then
+        playbook_name="play.ansible.yml"
+    fi
+
+    if [[ -z "$verbosity" ]]; then
+        verbosity=""
+    else
+        verbosity="-$verbosity"
+    fi
+
+    print_warning "Running ansible"
+    # load the configuration
+    load_config
+
+    ansible-playbook -i $inventory_path $playbook_name $verbosity
+}
+
+cmd_run_modules(){
+    local module_name="$1"
+    local module_args="$2"
+    local verbosity="$3"
+
+    if [[ -z "$module_name" ]]; then
+        module_name="nothing"
+    fi
+
+    if [[ -z "$module_args" ]]; then
+        module_args="${module_name}"
+    fi
+
+    if [[ -z "$verbosity" ]]; then
+        verbosity=""
+    else
+        verbosity="-$verbosity"
+    fi
+
+    print_warning "Running ansible python module"
+    # load the configuration
+    load_config
+
+    args_file="modules/args/$module_args.json"
+    if [[ ! -f $args_file ]]; then
+      cp $script_dir/../templates/ansible_module_args.json $args_file
+    fi
+
+    if [[ -f $args_file ]]; then
+        cp $args_file $args_file.tmp
+
+        sed -i "s/{{AZURE_CLIENT_ID}}/$AZURE_CLIENT_ID/g" $args_file
+        sed -i "s/{{AZURE_SECRET}}/$AZURE_SECRET/g" $args_file
+        sed -i "s/{{AZURE_TENANT}}/$AZURE_TENANT/g" $args_file
+
+        python3 -m pdb modules/$module_name.py $args_file
+        #rm $args_file.tmp
+    else
+        print_error "##[command] Error: File not found: $args_file"
+    fi
+
+}
+
 command_show() {
   print_info "Showing things"
   # load the configuration
@@ -84,6 +155,14 @@ main() {
           name_arg=$2
           shift
           ;;
+        -i|--inventory)
+          inventory_arg=$2
+          shift
+          ;;
+        -v|--verbosity)
+          verbosity_arg=$2
+          shift
+          ;;                    
         *)
           command=$1
           ;;
@@ -99,7 +178,7 @@ main() {
 
     # Execute the command
     case $command in
-        track)
+        find)
           shift
           search_galaxy_collection "show"
           ;;
@@ -110,9 +189,23 @@ main() {
         show)
           shift
           command_show
-
           ;;
-
+        play)
+          shift
+          if [[ -z "$name_arg" ]]; then
+              print_error "Error: Missing name argument (--name or -n)"
+              exit 1
+          fi          
+          cmd_run "$name_arg" "$inventory_arg" "$verbosity_arg"
+          ;;
+        modules)
+          shift
+          if [[ -z "$name_arg" ]]; then
+              print_error "Error: Missing name argument (--name or -n)"
+              exit 1
+          fi          
+          cmd_run_modules "$name_arg" "$inventory_arg" "$verbosity_arg"
+          ;;
         new)
           shift
           if [[ -z "$name_arg" ]]; then
