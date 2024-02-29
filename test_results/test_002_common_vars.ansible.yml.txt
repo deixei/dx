@@ -1,0 +1,23 @@
+Using /home/marcio/repos/deixei/ansible-sharp/ansible_collections/ansiblesharp/common/tests/integration/case_1/ansible.cfg as config file
+
+PLAY [Playbook for testing the common_vars module] *****************************
+
+TASK [Checking version variable] ***********************************************
+ok: [localhost] => {
+    "changed": false,
+    "msg": "The version is correct"
+}
+
+TASK [Checking kind variable] **************************************************
+ok: [localhost] => {
+    "changed": false,
+    "msg": "The kind is correct"
+}
+
+TASK [assert as error] *********************************************************
+An exception occurred during task execution. To see the full traceback, use -vvv. The error was: NoneType: None
+fatal: [localhost]: FAILED! => {"changed": false, "msg": "Invalid options for ansible.builtin.assert: error_msg"}
+
+PLAY RECAP *********************************************************************
+localhost                  : ok=2    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+

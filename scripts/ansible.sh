@@ -16,6 +16,10 @@ usage() {
   print_info "Commands:"
   echo "  find           Find ansible galaxy collections"
   echo "  build          Build and install ansible galaxy collections"
+  echo "  show           Show things"
+  echo "  play           Run ansible playbook"
+  echo "  modules        !Run ansible python module"
+  echo "  new            !Create new ansible galaxy collection"
 
 }
 
@@ -56,13 +60,25 @@ build_and_install(){
 
 
 search_galaxy_collection(){
-  local action=$1  
+  local action=$1
+  local name=$2  
 
   find $home_dir -name "galaxy.yml" -exec dirname {} \; | while read -r dir; do
-    print_info "Found: $dir"
-    if [[ $action == "build" ]]; then
-      build_and_install $dir
+    if [[ -n "$name" ]]; then
+      if [[ $dir == *"$name"* ]]; then
+        print_info "Found: $dir"
+        if [[ $action == "build" ]]; then
+          build_and_install $dir
+        fi
+      fi
+    else
+      print_info "Found: $dir"
+      if [[ $action == "build" ]]; then
+        build_and_install $dir
+      fi
     fi
+
+
   done
 }
 
@@ -135,6 +151,78 @@ cmd_run_modules(){
 
 }
 
+command_test_playbooks() {
+  print_info "Executing ansible playbooks test cases"
+  # load the configuration
+  load_config
+  local name="$1"
+  local start_dir=$(pwd)
+  echo "Start dir: $start_dir"
+
+  verbosity="-v"
+
+  mkdir -p "${start_dir}/test_results"
+  echo -e "# Test Execution\n" > $start_dir/test_results/test_results.md
+
+  pass_counter=0
+  error_counter=0
+  total_counter=0
+
+  while read -r dir; do
+  
+      if [[ -n "$name" ]]; then
+      if [[ $dir == *"$name"* ]]; then
+        print_info "Found: $dir"
+        files=$(find "${dir}" -type f -name 'test_*.ansible.yml')
+        for file in $files
+        do
+            collection_name=$(basename "${dir}")
+            file_name=$(basename "${file}")
+            file_parent=$(basename $(dirname "${file}"))
+            test_case_dir=$(dirname "${file}")
+            echo -e "## Suite '${collection_name}'.'${file_parent}' - Use case: '${file_name}'\n" >> $start_dir/test_results/test_results.md
+
+            echo "" > "${start_dir}/test_results/${file_name}.txt"
+            ANSIBLE_CONFIG=${test_case_dir}/ansible.cfg ansible-playbook "${file}" $verbosity > "${start_dir}/test_results/${file_name}.txt"
+            total_counter=$((total_counter + 1))
+            # Extract summary information from the output file
+            summary=$(grep -A 5 "PLAY RECAP" "${start_dir}/test_results/${file_name}.txt")
+
+            # Use awk to extract the value of failed
+            failed_count=$(echo $summary | awk -F'failed=' '{print $2}' | awk '{print $1}')
+
+            # Check if failed count is different from 0
+            if [ $failed_count -ne 0 ]; then
+              echo "There were failures: '${collection_name}'.'${file_parent}'.'${file_name}'"
+              error_counter=$((error_counter + 1))
+            else
+              echo "No failures: '${collection_name}'.'${file_parent}'.'${file_name}'"
+              pass_counter=$((pass_counter + 1))
+            fi
+
+          # Append the summary to the test results
+            echo -e "\`\`\`txt\n${summary}\n\`\`\`\n" >> $start_dir/test_results/test_results.md
+
+            #cat "${start_dir}/test_results/${file_name}.txt" 
+            
+            
+        done
+
+
+      fi
+    fi
+
+
+  done < <(find $home_dir -name "galaxy.yml" -exec dirname {} \;)
+  echo -e "## Summary\n\nTotal: ${total_counter}\nPass: ${pass_counter}\nFail: ${error_counter} " >> $start_dir/test_results/test_results.md
+
+  if [ $error_counter -ne 0 ]; then
+   exit 1
+  fi
+
+}
+
+
 command_show() {
   print_info "Showing things"
   # load the configuration
@@ -180,11 +268,15 @@ main() {
     case $command in
         find)
           shift
-          search_galaxy_collection "show"
+          search_galaxy_collection "show" "$name_arg"
           ;;
         build)
           shift
-          search_galaxy_collection "build"
+          search_galaxy_collection "build" "$name_arg"
+          ;;
+        test)
+          shift
+          command_test_playbooks "$name_arg"
           ;;
         show)
           shift
