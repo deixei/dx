@@ -181,7 +181,7 @@ command_test_playbooks() {
             file_name=$(basename "${file}")
             file_parent=$(basename $(dirname "${file}"))
             test_case_dir=$(dirname "${file}")
-            echo -e "## Suite '${collection_name}'.'${file_parent}' - Use case: '${file_name}'\n" >> $start_dir/test_results/test_results.md
+            echo -e "## Suite '${collection_name}' Case: '${file_parent}' - Test: '${file_name}'\n" >> $start_dir/test_results/test_results.md
 
             echo "" > "${start_dir}/test_results/${file_name}.txt"
             ANSIBLE_CONFIG=${test_case_dir}/ansible.cfg ansible-playbook "${file}" $verbosity > "${start_dir}/test_results/${file_name}.txt"
