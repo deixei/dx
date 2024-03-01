@@ -15,11 +15,12 @@ usage() {
   echo
   print_info "Commands:"
   echo "  find           Find ansible galaxy collections"
-  echo "  build          Build and install ansible galaxy collections"
+  echo "  build          Build and install ansible galaxy collections. Example: dx ansible build --name 'common'"
   echo "  show           Show things"
   echo "  play           Run ansible playbook"
   echo "  modules        !Run ansible python module"
   echo "  new            !Create new ansible galaxy collection"
+  echo "  test           Run ansible playbooks test cases. Example: dx ansible test --name 'common'"
 
 }
 
