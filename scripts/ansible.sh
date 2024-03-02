@@ -102,10 +102,10 @@ cmd_run(){
         verbosity="-$verbosity"
     fi
 
-    print_warning "Running ansible"
-    # load the configuration
+    print_warning "Running ansible: Playbook: $playbook_name, Inventory: $inventory_path, Verbosity: $verbosity"
+    
     load_config
-
+    
     ansible-playbook -i $inventory_path $playbook_name $verbosity
 }
 

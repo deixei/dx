@@ -206,7 +206,7 @@ generate_service_principal() {
 
     write_config_setting "${name}azure_tenant" "$TENANT_ID"
     write_config_setting "${name}azure_client_id" "$APP_ID"
-    write_config_setting "${name}azure_client_secret" "$CLIENT_SECRET"
+    write_config_setting "${name}azure_secret" "$CLIENT_SECRET"
 
 }
 
@@ -334,17 +334,17 @@ main() {
             fi
 
             if [[ -z "$secret_arg" ]]; then
-              if [[ -z "$AZURE_CLIENT_SECRET" ]]; then
-                  print_error "Error: Missing azure_client_secret in configuration file"
+              if [[ -z "$AZURE_SECRET" ]]; then
+                  print_error "Error: Missing azure_secret in configuration file"
                   exit 1
               fi
             else
                 # update the git email in configuration file
-                write_config_setting "azure_client_secret" "$secret_arg"
-                AZURE_CLIENT_SECRET=$secret_arg
+                write_config_setting "azure_secret" "$secret_arg"
+                AZURE_SECRET=$secret_arg
             fi
 
-            az_config "$AZURE_TENANT" "$AZURE_CLIENT_ID" "$AZURE_CLIENT_SECRET"
+            az_config "$AZURE_TENANT" "$AZURE_CLIENT_ID" "$AZURE_SECRET"
             ;;
         git)
             shift

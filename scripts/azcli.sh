@@ -35,7 +35,7 @@ cmd_az_login() {
     az config set core.allow_broker=true
     az account clear
     load_config
-    az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT
+    az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_SECRET --tenant $AZURE_TENANT
 }
 
 cmd_az_set_subscription() {
