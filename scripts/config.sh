@@ -94,7 +94,7 @@ read_init_config() {
 
       # If the flag is true, display the value
       if [[ "$display_values" == "true" ]]; then
-        echo "$var_name: '$value'"
+        echo "$var_name=$value"
       fi
 
       # Export the variable
@@ -187,26 +187,39 @@ generate_service_principal() {
     # Replace with your own values
     # TODO: bug this needs to be unique per user
     local name="$1"
+    local management_group="$2"
 
     SERVICE_PRINCIPAL_NAME="dx_${name}_sp"
 
     # Create the service principal with the Owner role and capture the output as JSON
-    SP_OUTPUT=$(az ad sp create-for-rbac --name "$SERVICE_PRINCIPAL_NAME" --role Owner --sdk-auth)
+    SP_OUTPUT=$(az ad sp create-for-rbac --name "$SERVICE_PRINCIPAL_NAME" --role Owner --scope /providers/Microsoft.Management/managementGroups/$management_group)
+
+    print_warning "Service principal output:"
+    echo "$SP_OUTPUT"
 
     # Extract the values from the output JSON and store them in variables
-    APP_ID=$(echo "$SP_OUTPUT" | grep -oP '(?<="clientId": ")[^"]+')
-    TENANT_ID=$(echo "$SP_OUTPUT" | grep -oP '(?<="tenantId": ")[^"]+')
-    CLIENT_SECRET=$(echo "$SP_OUTPUT" | grep -oP '(?<="clientSecret": ")[^"]+')
+    APP_ID=$(echo "$SP_OUTPUT" | grep -oP '(?<="appId": ")[^"]+')
+    TENANT_ID=$(echo "$SP_OUTPUT" | grep -oP '(?<="tenant": ")[^"]+')
+    CLIENT_SECRET=$(echo "$SP_OUTPUT" | grep -oP '(?<="password": ")[^"]+')
 
-
+    print_warning "Service principal values:"
     # Print the values for verification
     echo "$APP_ID"
     echo "$CLIENT_SECRET"
     echo "$TENANT_ID"
 
-    write_config_setting "${name}azure_tenant" "$TENANT_ID"
-    write_config_setting "${name}azure_client_id" "$APP_ID"
-    write_config_setting "${name}azure_secret" "$CLIENT_SECRET"
+    write_config_setting "azure_tenant" "$TENANT_ID"
+    write_config_setting "azure_client_id" "$APP_ID"
+    write_config_setting "azure_secret" "$CLIENT_SECRET"
+
+    write_config_setting "${SERVICE_PRINCIPAL_NAME}_azure_tenant" "$TENANT_ID"
+    write_config_setting "${SERVICE_PRINCIPAL_NAME}_azure_client_id" "$APP_ID"
+    write_config_setting "${SERVICE_PRINCIPAL_NAME}_azure_secret" "$CLIENT_SECRET"
+    
+
+    print_info "Service principal created and saved in configuration file"
+    echo "  dx config az --tenant \"$TENANT_ID\" --client \"$APP_ID\" --secret \"$CLIENT_SECRET\""
+    echo "  dx config show"
 
 }
 
@@ -250,6 +263,10 @@ main() {
           secret_arg=$2
           shift
           ;;
+        -o|--output)
+          output_arg=$2
+          shift
+          ;;          
         *)
           command=$1
           ;;
@@ -267,11 +284,32 @@ main() {
     case $command in
         show)
           shift
-          print_info "Default configurations"
-          cat_local_config
-          echo
-          print_info "User configurations"
-          cat_config
+
+          if [[ -z "$output_arg" ]]; then
+            print_info "Default configurations"
+            cat_local_config
+            echo
+            print_info "User configurations"
+            cat_config
+
+            exit 0
+          fi
+
+          if [[ "$output_arg" == "local" ]]; then
+            print_warning "Local configurations"
+            cat_local_config
+          fi
+
+          if [[ "$output_arg" == "user" ]]; then
+            print_warning "User configurations"
+            cat_config
+          fi
+
+          if [[ "$output_arg" == "env" ]]; then
+            print_warning "Environment variables"
+            read_init_config true
+            echo "PYTHONPATH=~/.ansible/collections/ansible_collections"
+          fi
 
           ;;
         init)
@@ -289,7 +327,12 @@ main() {
               exit 1
           fi
 
-          generate_service_principal "$name_arg"
+          if [[ -z "$key_arg" ]]; then
+              print_error "Error: Missing key argument (--key or -k). With Management Group ID"
+              exit 1
+          fi
+
+          generate_service_principal "$name_arg" "$key_arg"
           ;;
         set)
           shift
