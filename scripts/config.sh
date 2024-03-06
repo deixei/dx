@@ -186,6 +186,9 @@ az_config() {
 generate_service_principal() {
     # Replace with your own values
     # TODO: bug this needs to be unique per user
+    # https://learn.microsoft.com/en-us/cli/azure/azure-cli-sp-tutorial-1?tabs=bash
+    # https://learn.microsoft.com/en-us/azure/role-based-access-control/scope-overview
+
     local name="$1"
     local management_group="$2"
 
