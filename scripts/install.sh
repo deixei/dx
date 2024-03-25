@@ -16,7 +16,7 @@ usage() {
     echo "  show            Show information"
     echo "  python          Install python"
     echo "  ansible         Install ansible"
-    echo "  devtools       Install developer tools"
+    echo "  devtools        Install developer tools"
     echo "  pip             Install a package using pip. Example: dx install pip --name ansible or dx install pip -n 'ansible azure-monitor-opentelemetry' "
 
 

@@ -68,6 +68,8 @@ usage() {
   echo "  install           Install developer tools"
   echo "  me                Show information about the environment"
   echo "  venv              Virtual environment helper (define virtual env -v, activate -a, deactivate -d)"
+  echo "  az                Azure CLI helper"
+  echo "  cc                Cookiecutter helper"
   echo
   print_info "More:"
   echo "  http://www.deixei.com"
@@ -187,6 +189,10 @@ case $command in
   az)
     shift
     $script_dir/scripts/azcli.sh "$@"
+    ;;
+  cc)
+    shift
+    $script_dir/scripts/cookiecutter.sh "$@"
     ;;
   venv)
     shift
