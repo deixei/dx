@@ -10,8 +10,18 @@ usage() {
   echo
   print_info "Options:"
   echo "  -h, --help      Show this help message and exit"
+  echo "  -n, --name      The name of the project"
+  echo "  -p, --project   The name of the project"
+  echo "  -r, --repo      The name of the repository"
+  echo "  -u, --url       The url of the repository"
   echo
   print_info "Commands:"
+  echo
+  echo " clone -u [url]          Clone a git repository"
+  echo
+  print_info "Examples:"
+  echo
+  echo " dx git clone -u https://github.com/deixei/cookie.git       # Clone a github repository, under repos/deixei/cookie"
 
 }
 
