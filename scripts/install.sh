@@ -16,6 +16,7 @@ usage() {
     echo "  show            Show information"
     echo "  python          Install python"
     echo "  ansible         Install ansible"
+    echo "  cookiecutter    Install cookiecutter"
     echo "  devtools        Install developer tools"
     echo "  pip             Install a package using pip. Example: dx install pip --name ansible or dx install pip -n 'ansible azure-monitor-opentelemetry' "
 
@@ -48,6 +49,21 @@ install_python() {
 show_python_version() {
     print_info "Python version: $(python3 --version)"
     print_info "Pip version: $(pip3 --version)"
+}
+
+install_cookiecutter() {
+    print_warning "Installing cookiecutter"
+
+    # check that cookiecutter is installed
+    if ! command -v cookiecutter &> /dev/null
+    then
+        print_info "cookiecutter is not installed"
+        python3 -m pip install cookiecutter    
+    else
+        print_success "cookiecutter is installed"
+    fi
+
+    
 }
 
 install_ansible() {
@@ -216,7 +232,10 @@ main() {
         show)
           shift
           command_show
-
+          ;;
+        cookiecutter)
+          shift
+          install_cookiecutter
           ;;
         python)
           shift

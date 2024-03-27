@@ -1,5 +1,5 @@
 #!/bin/bash
-subcommand="cmd_template"
+subcommand="cc"
 script_dir=$(dirname "$0")
 source $script_dir/common.sh
 
@@ -8,12 +8,17 @@ usage() {
   echo
   print_info "Usage: dx $subcommand [options] [command]"
   echo
+  echo "https://cookiecutter.readthedocs.io/en/2.0.2/index.html"
+  echo
   print_info "Options:"
   echo "  -h, --help      Show this help message and exit"
   echo
   print_info "Commands:"
 
 }
+
+# cookiecutter https://github.com/user/repo-name.git --directory="directory1-name"
+# cookiecutter https://github.com/deixei/cookie.git --directory="simple"
 
 command_show() {
   print_info "Showing things"
