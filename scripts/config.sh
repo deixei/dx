@@ -67,11 +67,15 @@ set_bashrc() {
     echo "alias dx='$dxtools_path/dx.sh'" >> "$bashrc_file"
   fi
 
-  if grep -q "if [[ -f $home_dir/.dx/exporting_vars.sh ]]; then" "$bashrc_file" 2>/dev/null; then
+  local export_line
+  local source_line
+  export_line="if [[ -f \"$home_dir/.dx/exporting_vars.sh\" ]]; then"
+  source_line="    . \"$home_dir/.dx/exporting_vars.sh\""
+  if grep -Fq "$export_line" "$bashrc_file" 2>/dev/null; then
     print_info "Configuration already exists"
   else
-    echo "if [[ -f $home_dir/.dx/exporting_vars.sh ]]; then" >> "$bashrc_file"
-    echo "    . $home_dir/.dx/exporting_vars.sh" >> "$bashrc_file"
+    echo "$export_line" >> "$bashrc_file"
+    echo "$source_line" >> "$bashrc_file"
     echo "fi" >> "$bashrc_file"
   fi
 }

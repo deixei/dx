@@ -65,12 +65,9 @@ build_and_install(){
       if [[ -z "$build_bin_file" ]]; then
           print_error "Error: Build artifact not found in $temp_folder"
           result=1
-      elif [[ -f "$build_bin_file" ]]; then
+      else
           ansible-galaxy collection install "$build_bin_file" --force -p "$ansible_collections_target_folder"
           rm "$build_bin_file"
-      else
-          print_error "Error: File not found: $build_bin_file"
-          result=1
       fi
   else
       print_error "This folder [$folder] does not exit."

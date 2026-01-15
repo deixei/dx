@@ -33,7 +33,7 @@ read_init_config() {
 
 
     # Read the configuration file line by line
-    while IFS= read -r line || [[ -n "$line" ]]; do
+    while IFS= read -r line; do
       # Ignore empty lines and lines starting with #
       if [[ -z "$line" || ${line:0:1} == "#" ]]; then
         continue
@@ -63,7 +63,7 @@ read_init_config() {
       else
         echo "Skipping invalid config key: $var_name" >&2
       fi
-    done < "$config_file"
+    done < <(cat "$config_file"; echo)
 }
 
 if [[ $# -gt 0 ]]; then

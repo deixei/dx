@@ -104,15 +104,15 @@ install_ansible() {
         exit 1
     fi
     
-    if [[ $EUID -eq 0 ]]; then
-        # Running as root: install system-wide
-        python3 -m pip install ansible
-        export PYTHONPATH="${PYTHONPATH}:/root/.ansible/collections/ansible_collections"
-    else
+    if [[ $EUID -ne 0 ]]; then
         python3 -m pip install --user ansible
         # add to PATH export PATH=$PATH:/home/marcio/.local/bin
         export PATH=$PATH:"$home_dir/.local/bin"
         export PYTHONPATH="${PYTHONPATH}:$home_dir/.ansible/collections/ansible_collections"
+    else
+        # Running as root: install system-wide
+        python3 -m pip install ansible
+        export PYTHONPATH="${PYTHONPATH}:/root/.ansible/collections/ansible_collections"
     fi
 
 }
@@ -141,10 +141,10 @@ cmd_pip_install() {
     local packages=()
     local IFS=' '
     read -r -a packages <<< "$name"
-    if [[ $EUID -eq 0 ]]; then
-        python3 -m pip install "${packages[@]}"
-    else
+    if [[ $EUID -ne 0 ]]; then
         python3 -m pip install --user "${packages[@]}"
+    else
+        python3 -m pip install "${packages[@]}"
     fi
 
 }
