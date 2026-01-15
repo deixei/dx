@@ -52,7 +52,7 @@ read_init_config() {
       var_name="${key}"
       var_name=$(echo "$var_name" | tr '[:lower:]' '[:upper:]')
       
-      if [[ "$var_name" =~ ^[A-Z_][A-Z0-9_]*$ ]]; then
+      if [[ "$var_name" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
         # If the flag is true, display the value
         if [[ "$display_values" == "true" ]]; then
           echo "export $var_name=$value"

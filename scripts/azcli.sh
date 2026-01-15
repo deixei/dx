@@ -100,13 +100,13 @@ cmd_search_resource_groups_by_name() {
     fi
 
     # Loop over each subscription
-    while IFS=$'\t' read -r -a subscription; do
+    while IFS=$'\t' read -r subscription_name subscription_id; do
         # Set the subscription for the az command
-        print_info "Searching in subscription: ${subscription[0]}"
-        az account set --subscription "${subscription[1]}"
+        print_info "Searching in subscription: ${subscription_name}"
+        az account set --subscription "${subscription_id}"
 
         # List the resource groups in the subscription
-        az group list --query "[? contains(name, '$resource_group_name')].{ResourceGroupName:name, ResourceGroupId:id, SubscriptionName:'${subscription[0]}'}" -o table
+        az group list --query "[? contains(name, '$resource_group_name')].{ResourceGroupName:name, ResourceGroupId:id, SubscriptionName:'${subscription_name}'}" -o table
     done <<< "$subscriptions"
 }
 

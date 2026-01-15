@@ -96,7 +96,7 @@ read_init_config() {
     fi
 
     # Read the configuration file line by line
-    while IFS= read -r line || [[ -n "$line" ]]; do
+    while IFS= read -r line; do
       # Ignore empty lines and lines starting with #
       if [[ -z "$line" || ${line:0:1} == "#" ]]; then
         continue
@@ -110,7 +110,7 @@ read_init_config() {
       var_name="${key}"
       var_name=$(echo "$var_name" | tr '[:lower:]' '[:upper:]')
 
-      if [[ "$var_name" =~ ^[A-Z_][A-Z0-9_]*$ ]]; then
+      if [[ "$var_name" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
         # If the flag is true, display the value
         if [[ "$display_values" == "true" ]]; then
           echo "$var_name=$value"
@@ -121,7 +121,7 @@ read_init_config() {
       else
         print_warning "Skipping invalid config key: $var_name"
       fi
-    done < "$config_file"
+    done < <(cat "$config_file"; echo)
 }
 
 # Function to get a value from the config.ini file

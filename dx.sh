@@ -139,7 +139,7 @@ deactivate_virtual_env() {
       deactivate
     else
       print_error "Virtual environment is not active"
-      return 1
+      exit 1
     fi
 }
 
