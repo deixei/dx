@@ -58,8 +58,7 @@ read_init_config() {
         fi
 
         # Export the variable
-        printf -v "$var_name" '%s' "$value"
-        export "$var_name"
+        export "${var_name}=${value}"
       else
         echo "Skipping invalid config key: $var_name" >&2
       fi

@@ -107,7 +107,6 @@ install_ansible() {
     if [[ $EUID -eq 0 ]]; then
         # Running as root: install system-wide
         python3 -m pip install ansible
-        export PATH=$PATH:/root/.local/bin
         export PYTHONPATH="${PYTHONPATH}:/root/.ansible/collections/ansible_collections"
     else
         python3 -m pip install --user ansible

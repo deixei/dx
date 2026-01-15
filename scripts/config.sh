@@ -61,7 +61,7 @@ set_bashrc() {
   touch "$bashrc_file"
   alias dx="$dxtools_path/dx.sh"
 
-  if grep -q "alias dx=" "$bashrc_file" 2>/dev/null; then
+  if grep -q '^alias dx=' "$bashrc_file" 2>/dev/null; then
     print_error "Alias DX already exists"
   else
     echo "alias dx='$dxtools_path/dx.sh'" >> "$bashrc_file"
@@ -113,8 +113,7 @@ read_init_config() {
         fi
 
         # Export the variable
-        printf -v "$var_name" '%s' "$value"
-        export "$var_name"
+        export "${var_name}=${value}"
       else
         print_warning "Skipping invalid config key: $var_name"
       fi

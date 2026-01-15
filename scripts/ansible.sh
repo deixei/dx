@@ -63,7 +63,7 @@ build_and_install(){
       build_bin_file=$(find "$temp_folder" -maxdepth 1 -name "*.tar.gz" -print -quit)
       if [[ -z "$build_bin_file" ]]; then
           print_error "Error: Build artifact not found in $temp_folder"
-      elif [[ -f $build_bin_file ]]; then
+      elif [[ -f "$build_bin_file" ]]; then
           ansible-galaxy collection install "$build_bin_file" --force -p "$ansible_collections_target_folder"
           rm "$build_bin_file"
       else
@@ -146,11 +146,11 @@ cmd_run_modules(){
     fi
 
     args_file="modules/args/$module_args.json"
-    if [[ ! -f $args_file ]]; then
+    if [[ ! -f "$args_file" ]]; then
       cp "$script_dir/../templates/ansible_module_args.json" "$args_file"
     fi
 
-    if [[ -f $args_file ]]; then
+    if [[ -f "$args_file" ]]; then
         cp "$args_file" "$args_file.tmp"
 
         sed -i "s/{{AZURE_CLIENT_ID}}/$AZURE_CLIENT_ID/g" "$args_file"
