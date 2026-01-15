@@ -54,6 +54,7 @@ build_and_install(){
       mkdir -p "$temp_folder"
   fi
 
+  local result=0
   if [ -d "$folder" ]; then
 
       cd "$folder"
@@ -63,16 +64,20 @@ build_and_install(){
       build_bin_file=$(find "$temp_folder" -maxdepth 1 -name "*.tar.gz" -print -quit)
       if [[ -z "$build_bin_file" ]]; then
           print_error "Error: Build artifact not found in $temp_folder"
+          result=1
       elif [[ -f "$build_bin_file" ]]; then
           ansible-galaxy collection install "$build_bin_file" --force -p "$ansible_collections_target_folder"
           rm "$build_bin_file"
       else
           print_error "Error: File not found: $build_bin_file"
+          result=1
       fi
   else
       print_error "This folder [$folder] does not exit."
+      result=1
   fi
   rm -rf "$temp_dir"
+  return "$result"
 }
 
 

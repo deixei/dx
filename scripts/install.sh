@@ -139,7 +139,8 @@ cmd_pip_install() {
     fi
 
     local packages=()
-    IFS=' ' read -r -a packages <<< "$name"
+    local IFS=' '
+    read -r -a packages <<< "$name"
     if [[ $EUID -eq 0 ]]; then
         python3 -m pip install "${packages[@]}"
     else

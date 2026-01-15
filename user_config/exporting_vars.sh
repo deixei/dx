@@ -1,4 +1,5 @@
 #!/bin/bash
+# Avoid enforcing strict mode when sourced to prevent impacting the parent shell.
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   set -euo pipefail
   IFS=$'\n\t'
