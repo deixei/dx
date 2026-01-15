@@ -104,8 +104,8 @@ install_ansible() {
         exit 1
     fi
     
-    if [[ $EUID -ne 0 ]]; then
-        #This script must be run as root
+    if [[ $EUID -eq 0 ]]; then
+        # Running as root: install system-wide
         python3 -m pip install ansible
         export PATH=$PATH:/root/.local/bin
         export PYTHONPATH="${PYTHONPATH}:/root/.ansible/collections/ansible_collections"
@@ -141,8 +141,7 @@ cmd_pip_install() {
 
     local packages=()
     IFS=' ' read -r -a packages <<< "$name"
-    if [[ $EUID -ne 0 ]]; then
-        #This script must be run as root
+    if [[ $EUID -eq 0 ]]; then
         python3 -m pip install "${packages[@]}"
     else
         python3 -m pip install --user "${packages[@]}"

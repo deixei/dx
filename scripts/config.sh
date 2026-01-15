@@ -106,13 +106,18 @@ read_init_config() {
       var_name="${key}"
       var_name=$(echo "$var_name" | tr '[:lower:]' '[:upper:]')
 
-      # If the flag is true, display the value
-      if [[ "$display_values" == "true" ]]; then
-        echo "$var_name=$value"
-      fi
+      if [[ "$var_name" =~ ^[A-Z_][A-Z0-9_]*$ ]]; then
+        # If the flag is true, display the value
+        if [[ "$display_values" == "true" ]]; then
+          echo "$var_name=$value"
+        fi
 
-      # Export the variable
-      export "${var_name}=${value}"
+        # Export the variable
+        printf -v "$var_name" '%s' "$value"
+        export "$var_name"
+      else
+        print_warning "Skipping invalid config key: $var_name"
+      fi
     done < "$config_file"
 }
 
