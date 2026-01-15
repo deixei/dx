@@ -35,13 +35,13 @@ self_update() {
 
 set_chmod() {
   ## set permissins to execute all *.sh
-  if compgen -G "$dxtools_path/*.sh" > /dev/null; then
+  if ls "$dxtools_path"/*.sh >/dev/null 2>&1; then
     chmod +x "$dxtools_path"/*.sh
   fi
-  if compgen -G "$dxtools_path/scripts/*.sh" > /dev/null; then
+  if ls "$dxtools_path/scripts"/*.sh >/dev/null 2>&1; then
     chmod +x "$dxtools_path/scripts"/*.sh
   fi
-  if compgen -G "$dxtools_path/user_config/*.sh" > /dev/null; then
+  if ls "$dxtools_path/user_config"/*.sh >/dev/null 2>&1; then
     chmod +x "$dxtools_path/user_config"/*.sh
   fi
 }
@@ -135,7 +135,7 @@ activate_virtual_env() {
 
 deactivate_virtual_env() {
     print_warning "Deactivating virtual environment"
-    if declare -F deactivate >/dev/null; then
+    if [[ -n "${VIRTUAL_ENV:-}" ]] && declare -F deactivate >/dev/null; then
       deactivate
     else
       print_error "Virtual environment is not active"

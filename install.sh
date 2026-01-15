@@ -65,10 +65,10 @@ done
 # Copying the scripts to the desired folder
 mkdir -p "$folder_path"
 cp -r "$script_dir/"* "$folder_path"
-if compgen -G "$folder_path/*.sh" > /dev/null; then
+if ls "$folder_path"/*.sh >/dev/null 2>&1; then
   chmod +x "$folder_path"/*.sh
 fi
-if compgen -G "$folder_path/scripts/*.sh" > /dev/null; then
+if ls "$folder_path/scripts"/*.sh >/dev/null 2>&1; then
   chmod +x "$folder_path/scripts"/*.sh
 fi
 

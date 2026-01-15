@@ -139,7 +139,8 @@ cmd_pip_install() {
         exit 1
     fi
 
-    read -r -a packages <<< "$name"
+    local packages=()
+    IFS=' ' read -r -a packages <<< "$name"
     if [[ $EUID -ne 0 ]]; then
         #This script must be run as root
         python3 -m pip install "${packages[@]}"

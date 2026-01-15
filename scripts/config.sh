@@ -145,7 +145,7 @@ init() {
     print_info "Creating configuration file: $config_file"
     mkdir -p "$home_dir/.dx"
     cp -r "$dxtools_path/user_config/"* "$home_dir/.dx"
-    if compgen -G "$home_dir/.dx/*.sh" > /dev/null; then
+    if ls "$home_dir/.dx/"*.sh >/dev/null 2>&1; then
       chmod +x "$home_dir/.dx/"*.sh
     fi
 }

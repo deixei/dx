@@ -60,7 +60,7 @@ build_and_install(){
       ansible-galaxy collection build --force --output-path "$temp_folder"
       
       local build_bin_file
-      build_bin_file=$(find "$temp_folder" -maxdepth 1 -name "*-1.*.tar.gz" -print -quit)
+      build_bin_file=$(find "$temp_folder" -maxdepth 1 -name "*.tar.gz" -print -quit)
       if [[ -f $build_bin_file ]]; then
           ansible-galaxy collection install "$build_bin_file" --force -p "$ansible_collections_target_folder"
           rm "$build_bin_file"
