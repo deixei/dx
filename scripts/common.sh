@@ -1,5 +1,5 @@
 #!/bin/bash
-home_dir=$(echo ~)
+home_dir="${HOME}"
 dxtools_path="/opt/dxtools"
 user_config_path="$home_dir/.dx"
 exporting_vars="$home_dir/.dx/exporting_vars.sh"
@@ -12,25 +12,32 @@ BLUE='\033[0;34m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
+log_message() {
+  local level="$1"
+  local color="$2"
+  shift 2
+  echo -e "${color}[${level}] $*${NC}"
+}
+
 print_error() {
-  echo -e "${RED}$1${NC}"
+  log_message "ERROR" "$RED" "$@" >&2
 }
 
 print_success() {
-  echo -e "${GREEN}$1${NC}"
+  log_message "SUCCESS" "$GREEN" "$@"
 }
 
 print_info() {
-  echo -e "${BLUE}$1${NC}"
+  log_message "INFO" "$BLUE" "$@"
 }
 
 print_warning() {
-  echo -e "${YELLOW}$1${NC}"
+  log_message "WARN" "$YELLOW" "$@"
 }
 
 load_config() {
-  if [[ -f $exporting_vars ]]; then
-    source $exporting_vars
+  if [[ -f "$exporting_vars" ]]; then
+    source "$exporting_vars"
   else
     print_error "Configuration file not found: $exporting_vars"
     exit 1

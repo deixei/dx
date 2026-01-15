@@ -1,7 +1,13 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
 subcommand="github"
 script_dir=$(dirname "$0")
-source $script_dir/common.sh
+source "$script_dir/common.sh"
+trap 'print_error "Error on line $LINENO."' ERR
+command=""
+name_arg=""
 
 usage() {
   print_warning "### DX tools - $subcommand ###"
@@ -19,7 +25,11 @@ command_show() {
   print_info "Showing things"
   # load the configuration
   load_config
-  echo $DX_TOOLS_PATH
+  if [[ -n "${DX_TOOLS_PATH:-}" ]]; then
+    print_info "$DX_TOOLS_PATH"
+  else
+    print_warning "DX_TOOLS_PATH is not set"
+  fi
 }
 
 main() {
@@ -42,13 +52,13 @@ main() {
     done
 
     # Check if a command was passed
-    if [[ -z $command ]]; then
+    if [[ -z "$command" ]]; then
         usage
         exit 1
     fi
 
     # Execute the command
-    case $command in
+    case "$command" in
         show)
           shift
           command_show
@@ -62,7 +72,7 @@ main() {
               exit 1
           fi
 
-          echo "$name_arg"
+          print_info "$name_arg"
           ;;
 
         *)

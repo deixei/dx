@@ -1,10 +1,14 @@
 #!/bin/bash
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  set -euo pipefail
+  IFS=$'\n\t'
+fi
 
 # TO use it: 
 # source ~/.dx/exporting_vars.sh 
 # echo $DX_TOOLS_PATH
 
-home_dir=$(echo ~)
+home_dir="${HOME}"
 dxtools_path="/opt/dxtools"
 #script_dir=$(dirname "$0")
 script_dir=$(dirname "${BASH_SOURCE[0]}")
@@ -28,8 +32,7 @@ read_init_config() {
 
 
     # Read the configuration file line by line
-    while IFS= read -r line
-    do
+    while IFS= read -r line || [[ -n "$line" ]]; do
       # Ignore empty lines and lines starting with #
       if [[ -z "$line" || ${line:0:1} == "#" ]]; then
         continue
@@ -54,8 +57,8 @@ read_init_config() {
       fi
 
       # Export the variable
-      export $var_name=$value
-    done < <(cat "$config_file"; echo)
+      export "${var_name}=${value}"
+    done < "$config_file"
 }
 
 if [[ $# -gt 0 ]]; then

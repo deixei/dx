@@ -1,8 +1,14 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
 subcommand="ado"
 
 script_dir=$(dirname "$0")
-source $script_dir/common.sh
+source "$script_dir/common.sh"
+trap 'print_error "Error on line $LINENO."' ERR
+command=""
+name_arg=""
 
 usage() {
   print_warning "### DX tools - $subcommand ###"
@@ -17,10 +23,19 @@ usage() {
 }
 
 cmd_list_repos(){
-  print_warning "Get repos from project: $1"
-  az repos list --project "$1" --query "[].name" -o tsv | while read name; do
-    echo "Repository name: $name"
-  done
+  local project_name="$1"
+  if [[ -z "$project_name" ]]; then
+    print_error "Error: Missing project name"
+    return 1
+  fi
+  if ! command -v az &> /dev/null; then
+    print_error "az cli is not installed"
+    return 1
+  fi
+  print_warning "Get repos from project: $project_name"
+  while IFS= read -r name; do
+    print_info "Repository name: $name"
+  done < <(az repos list --project "$project_name" --query "[].name" -o tsv)
 }
 
 command_show() {
@@ -51,13 +66,13 @@ main() {
     done
 
     # Check if a command was passed
-    if [[ -z $command ]]; then
+    if [[ -z "$command" ]]; then
         usage
         exit 1
     fi
 
     # Execute the command
-    case $command in
+    case "$command" in
         show)
           shift
           command_show
@@ -71,7 +86,7 @@ main() {
               exit 1
           fi
 
-          echo "$name_arg"
+          print_info "$name_arg"
           ;;
 
         *)
