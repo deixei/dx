@@ -66,6 +66,8 @@ dx config init
 dx git <args>
 dx ado <args>
 dx ansible <args>
+dx az <args>
+dx cc <args>
 dx install <args>
 dx me
 dx venv -v|-a|-d
