@@ -168,6 +168,7 @@ write_config_setting() {
     init
   fi
 
+  local current_value
   current_value=$(get_value "$key")
 
   if [[ -z "$current_value" ]]; then
