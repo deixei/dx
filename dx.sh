@@ -34,7 +34,7 @@ self_update() {
 }
 
 set_chmod() {
-  ## set permissins to execute all *.sh
+  ## set permissions to execute all *.sh
   if ls "$dxtools_path"/*.sh >/dev/null 2>&1; then
     chmod +x "$dxtools_path"/*.sh
   fi
