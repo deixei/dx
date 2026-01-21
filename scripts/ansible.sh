@@ -70,7 +70,7 @@ build_and_install(){
           rm "$build_bin_file"
       fi
   else
-      print_error "This folder [$folder] does not exit."
+      print_error "This folder [$folder] does not exist."
       result=1
   fi
   rm -rf "$temp_dir"
