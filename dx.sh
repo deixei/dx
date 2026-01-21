@@ -105,7 +105,7 @@ me() {
 
 define_virtual_env() {
     print_warning "Defining virtual environment: source ~/bin/dx/activate"
-    # check id the virtual environment exists
+    # check if the virtual environment exists
     if [ ! -f "$home_dir/dx/bin/activate" ]; then
         print_warning "Creating virtual environment"
         python3 -m venv "$home_dir/dx"
