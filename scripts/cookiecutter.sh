@@ -1,7 +1,14 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
 subcommand="cc"
 script_dir=$(dirname "$0")
-source $script_dir/common.sh
+source "$script_dir/common.sh"
+trap 'print_error "Error on line $LINENO."' ERR
+command=""
+name_arg=""
+input_arg=""
 
 usage() {
   print_warning "### DX tools - $subcommand ###"
@@ -30,8 +37,12 @@ usage() {
 # cookiecutter https://github.com/deixei/cookie.git --directory="simple"
 
 command_run() {
-  local directory_name=$1
-  local input_file=$2
+  local directory_name="${1:-}"
+  local input_file="${2:-}"
+  if [[ -z "$directory_name" ]]; then
+    print_error "Missing template name"
+    return 1
+  fi
   print_info "Running cookiecutter"
   # load the configuration
   load_config
@@ -39,7 +50,8 @@ command_run() {
     # check that cookiecutter is installed
     if ! command -v cookiecutter &> /dev/null
     then
-        print_info "cookiecutter is not installed. Run: dx install cookiecutter"
+        print_error "cookiecutter is not installed. Run: dx install cookiecutter"
+        exit 1
     else
       # if no input file is provided
       if [[ -z "$input_file" ]]; then
@@ -92,13 +104,13 @@ main() {
     done
 
     # Check if a command was passed
-    if [[ -z $command ]]; then
+    if [[ -z "$command" ]]; then
         usage
         exit 1
     fi
 
     # Execute the command
-    case $command in
+    case "$command" in
         show)
           shift
           command_show

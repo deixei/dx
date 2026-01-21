@@ -1,10 +1,15 @@
 #!/bin/bash
+# Avoid enforcing strict mode when sourced to prevent impacting the parent shell.
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  set -euo pipefail
+  IFS=$'\n\t'
+fi
 
 # TO use it: 
 # source ~/.dx/exporting_vars.sh 
 # echo $DX_TOOLS_PATH
 
-home_dir=$(echo ~)
+home_dir="${HOME}"
 dxtools_path="/opt/dxtools"
 #script_dir=$(dirname "$0")
 script_dir=$(dirname "${BASH_SOURCE[0]}")
@@ -28,8 +33,7 @@ read_init_config() {
 
 
     # Read the configuration file line by line
-    while IFS= read -r line
-    do
+    while IFS= read -r line; do
       # Ignore empty lines and lines starting with #
       if [[ -z "$line" || ${line:0:1} == "#" ]]; then
         continue
@@ -48,13 +52,17 @@ read_init_config() {
       var_name="${key}"
       var_name=$(echo "$var_name" | tr '[:lower:]' '[:upper:]')
       
-      # If the flag is true, display the value
-      if [[ "$display_values" == "true" ]]; then
-        echo "export $var_name=$value"
-      fi
+      if [[ "$var_name" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+        # If the flag is true, display the value
+        if [[ "$display_values" == "true" ]]; then
+          echo "export $var_name=$value"
+        fi
 
-      # Export the variable
-      export $var_name=$value
+        # Export the variable
+        export "${var_name}=${value}"
+      else
+        echo "Skipping invalid config key: $var_name" >&2
+      fi
     done < <(cat "$config_file"; echo)
 }
 

@@ -1,7 +1,13 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
 subcommand="cmd_template"
 script_dir=$(dirname "$0")
-source $script_dir/common.sh
+source "$script_dir/common.sh"
+trap 'print_error "Error on line $LINENO."' ERR
+command=""
+name_arg=""
 
 usage() {
   print_warning "### DX tools - $subcommand ###"
@@ -43,13 +49,13 @@ main() {
     done
 
     # Check if a command was passed
-    if [[ -z $command ]]; then
+    if [[ -z "$command" ]]; then
         usage
         exit 1
     fi
 
     # Execute the command
-    case $command in
+    case "$command" in
         show)
           shift
           command_show
@@ -63,7 +69,7 @@ main() {
               exit 1
           fi
 
-          echo "$name_arg"
+          print_info "$name_arg"
           ;;
 
         *)

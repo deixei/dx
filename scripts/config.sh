@@ -1,6 +1,19 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
 script_dir=$(dirname "$0")
-source $script_dir/common.sh
+source "$script_dir/common.sh"
+trap 'print_error "Error on line $LINENO."' ERR
+command=""
+key_arg=""
+value_arg=""
+name_arg=""
+email_arg=""
+tenant_arg=""
+client_arg=""
+secret_arg=""
+output_arg=""
 
 usage() {
   print_warning "### DX tools - CONFIG - CLI helper ###"
@@ -35,29 +48,35 @@ usage() {
 
 cat_config() {
   print_info "Configuration file: $home_dir/.dx/config.ini"
-  cat $home_dir/.dx/config.ini
+  cat "$home_dir/.dx/config.ini"
 }
 
 cat_local_config() {
   print_info "Configuration file: $script_dir/.dx/config.ini"
-  cat $config_file
+  cat "$config_file"
 }
 
 set_bashrc() {
-  alias dx=$dxtools_path/dx.sh
+  local bashrc_file="$home_dir/.bashrc"
+  touch "$bashrc_file"
+  alias dx="$dxtools_path/dx.sh"
 
-  if grep -q "alias dx=" ~/.bashrc; then
+  if grep -q '^alias dx=' "$bashrc_file" 2>/dev/null; then
     print_error "Alias DX already exists"
   else
-    echo "alias dx='$dxtools_path/dx.sh'" >> ~/.bashrc
+    echo "alias dx='$dxtools_path/dx.sh'" >> "$bashrc_file"
   fi
 
-  if grep -q "if [[ -f ~/.dx/exporting_vars.sh ]]; then" ~/.bashrc; then
+  local export_line
+  local source_line
+  export_line="if [[ -f \"$home_dir/.dx/exporting_vars.sh\" ]]; then"
+  source_line="    . \"$home_dir/.dx/exporting_vars.sh\""
+  if grep -Fq "$export_line" "$bashrc_file" 2>/dev/null; then
     print_info "Configuration already exists"
   else
-    echo "if [[ -f ~/.dx/exporting_vars.sh ]]; then" >> ~/.bashrc
-    echo "    . ~/.dx/exporting_vars.sh" >> ~/.bashrc
-    echo "fi" >> ~/.bashrc
+    echo "$export_line" >> "$bashrc_file"
+    echo "$source_line" >> "$bashrc_file"
+    echo "fi" >> "$bashrc_file"
   fi
 }
 
@@ -77,8 +96,7 @@ read_init_config() {
     fi
 
     # Read the configuration file line by line
-    while IFS= read -r line
-    do
+    while IFS= read -r line; do
       # Ignore empty lines and lines starting with #
       if [[ -z "$line" || ${line:0:1} == "#" ]]; then
         continue
@@ -92,40 +110,52 @@ read_init_config() {
       var_name="${key}"
       var_name=$(echo "$var_name" | tr '[:lower:]' '[:upper:]')
 
-      # If the flag is true, display the value
-      if [[ "$display_values" == "true" ]]; then
-        echo "$var_name=$value"
-      fi
+      if [[ "$var_name" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+        # If the flag is true, display the value
+        if [[ "$display_values" == "true" ]]; then
+          echo "$var_name=$value"
+        fi
 
-      # Export the variable
-      export $var_name=$value
+        # Export the variable
+        export "${var_name}=${value}"
+      else
+        print_warning "Skipping invalid config key: $var_name"
+      fi
     done < <(cat "$config_file"; echo)
 }
 
 # Function to get a value from the config.ini file
 get_value() {
     local key=$1
-    awk -F '=' -v key="$key" '$1==key {print $2}' $config_file
+    awk -F '=' -v key="$key" '$1==key {print $2}' "$config_file"
 }
 
 # Function to set a value in the config.ini file
 set_value() {
     local key=$1
     local value=$2
-    awk -F '=' -v key="$key" -v value="$value" '$1==key {$2=value}1' OFS='=' $config_file > temp && mv temp $config_file
+    local tmp_file
+    tmp_file=$(mktemp)
+    awk -F '=' -v key="$key" -v value="$value" '$1==key {$2=value}1' OFS='=' "$config_file" > "$tmp_file"
+    mv "$tmp_file" "$config_file"
 }
 
 # Function to delete a key-value pair from the config.ini file
 delete_key() {
     local key=$1
-    awk -F '=' -v key="$key" '$1!=key' config.ini > temp && mv temp $config_file
+    local tmp_file
+    tmp_file=$(mktemp)
+    awk -F '=' -v key="$key" '$1!=key' "$config_file" > "$tmp_file"
+    mv "$tmp_file" "$config_file"
 }
 
 init() {
-    echo "Creating configuration file: $config_file"
-    mkdir -p $home_dir/.dx
-    cp -r $dxtools_path/user_config/* $home_dir/.dx
-    chmod +x $home_dir/.dx/*.sh
+    print_info "Creating configuration file: $config_file"
+    mkdir -p "$home_dir/.dx"
+    cp -r "$dxtools_path/user_config/"* "$home_dir/.dx"
+    if ls "$home_dir/.dx/"*.sh >/dev/null 2>&1; then
+      chmod +x "$home_dir/.dx/"*.sh
+    fi
 }
 
 write_config_setting() {
@@ -134,17 +164,18 @@ write_config_setting() {
 
   # Check if the file exists
   if [[ ! -f "$config_file" ]]; then
-    echo "Configuration file not found: $config_file"
+    print_error "Configuration file not found: $config_file"
     init
   fi
 
+  local current_value
   current_value=$(get_value "$key")
 
   if [[ -z "$current_value" ]]; then
-    echo "Setting $key=$value"
-    echo "$key=$value" >> $config_file
+    print_info "Setting $key=$value"
+    echo "$key=$value" >> "$config_file"
   else
-    echo "Updating $key=$value"
+    print_info "Updating $key=$value"
     set_value "$key" "$value"
   fi
 }
@@ -175,11 +206,11 @@ az_config() {
       exit 1
   fi
 
-  echo "tenant: $tenant"
-  echo "client: $client"
-  echo "secret: $secret"
+  print_info "tenant: $tenant"
+  print_info "client: $client"
+  print_info "secret: $secret"
 
-  az login --service-principal -u $client -p $secret --tenant $tenant
+  az login --service-principal -u "$client" -p "$secret" --tenant "$tenant"
 
 }
 
@@ -191,37 +222,45 @@ generate_service_principal() {
 
     local name="$1"
     local management_group="$2"
+    if [[ -z "$name" || -z "$management_group" ]]; then
+      print_error "Service principal name and management group are required"
+      return 1
+    fi
 
-    SERVICE_PRINCIPAL_NAME="dx_${name}_sp"
+    local service_principal_name="dx_${name}_sp"
 
     # Create the service principal with the Owner role and capture the output as JSON
-    SP_OUTPUT=$(az ad sp create-for-rbac --name "$SERVICE_PRINCIPAL_NAME" --role Owner --scope /providers/Microsoft.Management/managementGroups/$management_group)
+    local sp_output
+    sp_output=$(az ad sp create-for-rbac --name "$service_principal_name" --role Owner --scope "/providers/Microsoft.Management/managementGroups/$management_group")
 
     print_warning "Service principal output:"
-    echo "$SP_OUTPUT"
+    echo "$sp_output"
 
     # Extract the values from the output JSON and store them in variables
-    APP_ID=$(echo "$SP_OUTPUT" | grep -oP '(?<="appId": ")[^"]+')
-    TENANT_ID=$(echo "$SP_OUTPUT" | grep -oP '(?<="tenant": ")[^"]+')
-    CLIENT_SECRET=$(echo "$SP_OUTPUT" | grep -oP '(?<="password": ")[^"]+')
+    local app_id
+    local tenant_id
+    local client_secret
+    app_id=$(echo "$sp_output" | jq -r '.appId')
+    tenant_id=$(echo "$sp_output" | jq -r '.tenant')
+    client_secret=$(echo "$sp_output" | jq -r '.password')
 
     print_warning "Service principal values:"
     # Print the values for verification
-    echo "$APP_ID"
-    echo "$CLIENT_SECRET"
-    echo "$TENANT_ID"
+    echo "$app_id"
+    echo "$client_secret"
+    echo "$tenant_id"
 
-    write_config_setting "azure_tenant" "$TENANT_ID"
-    write_config_setting "azure_client_id" "$APP_ID"
-    write_config_setting "azure_secret" "$CLIENT_SECRET"
+    write_config_setting "azure_tenant" "$tenant_id"
+    write_config_setting "azure_client_id" "$app_id"
+    write_config_setting "azure_secret" "$client_secret"
 
-    write_config_setting "${SERVICE_PRINCIPAL_NAME}_azure_tenant" "$TENANT_ID"
-    write_config_setting "${SERVICE_PRINCIPAL_NAME}_azure_client_id" "$APP_ID"
-    write_config_setting "${SERVICE_PRINCIPAL_NAME}_azure_secret" "$CLIENT_SECRET"
+    write_config_setting "${service_principal_name}_azure_tenant" "$tenant_id"
+    write_config_setting "${service_principal_name}_azure_client_id" "$app_id"
+    write_config_setting "${service_principal_name}_azure_secret" "$client_secret"
     
 
     print_info "Service principal created and saved in configuration file"
-    echo "  dx config az --tenant \"$TENANT_ID\" --client \"$APP_ID\" --secret \"$CLIENT_SECRET\""
+    echo "  dx config az --tenant \"$tenant_id\" --client \"$app_id\" --secret \"$client_secret\""
     echo "  dx config show"
 
 }
@@ -278,13 +317,13 @@ main() {
     done
 
     # Check if a command was passed
-    if [[ -z $command ]]; then
+    if [[ -z "$command" ]]; then
         usage
         exit 1
     fi
 
     # Execute the command
-    case $command in
+    case "$command" in
         show)
           shift
 
@@ -358,7 +397,7 @@ main() {
             load_config
 
             if [[ -z "$tenant_arg" ]]; then
-              if [[ -z "$AZURE_TENANT" ]]; then
+              if [[ -z "${AZURE_TENANT:-}" ]]; then
                   print_error "Error: Missing azure_tenant in configuration file"
                   exit 1
               fi
@@ -369,7 +408,7 @@ main() {
             fi
 
             if [[ -z "$client_arg" ]]; then
-              if [[ -z "$AZURE_CLIENT_ID" ]]; then
+              if [[ -z "${AZURE_CLIENT_ID:-}" ]]; then
                   print_error "Error: Missing azure_client_id in configuration file"
                   exit 1
               fi
@@ -380,7 +419,7 @@ main() {
             fi
 
             if [[ -z "$secret_arg" ]]; then
-              if [[ -z "$AZURE_SECRET" ]]; then
+              if [[ -z "${AZURE_SECRET:-}" ]]; then
                   print_error "Error: Missing azure_secret in configuration file"
                   exit 1
               fi
@@ -398,7 +437,7 @@ main() {
             load_config
 
             if [[ -z "$name_arg" ]]; then
-              if [[ -z "$GIT_NAME" ]]; then
+              if [[ -z "${GIT_NAME:-}" ]]; then
                   print_error "Error: Missing git_name in configuration file"
                   exit 1
               fi
@@ -407,10 +446,10 @@ main() {
                 write_config_setting "git_name" "$name_arg"
                 GIT_NAME=$name_arg
             fi
-            echo "GIT_NAME: $GIT_NAME"
+            print_info "GIT_NAME: $GIT_NAME"
 
             if [[ -z "$email_arg" ]]; then
-              if [[ -z "$GIT_EMAIL" ]]; then
+              if [[ -z "${GIT_EMAIL:-}" ]]; then
                   print_error "Error: Missing git_email in configuration file"
                   exit 1
               fi
@@ -419,7 +458,7 @@ main() {
                 write_config_setting "git_email" "$email_arg"
                 GIT_EMAIL=$email_arg
             fi
-            echo "GIT_EMAIL: $GIT_EMAIL"
+            print_info "GIT_EMAIL: $GIT_EMAIL"
 
 
             git_config "$GIT_NAME" "$GIT_EMAIL"

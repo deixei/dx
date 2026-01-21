@@ -1,8 +1,14 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
 subcommand="install"
 
 script_dir=$(dirname "$0")
-source $script_dir/common.sh
+source "$script_dir/common.sh"
+trap 'print_error "Error on line $LINENO."' ERR
+command=""
+name_arg=""
 
 usage() {
   print_warning "### DX tools - $subcommand ###"
@@ -34,9 +40,17 @@ command_show() {
     echo "--------------------------------------"
     show_python_version
     echo "--------------------------------------"
-    print_info "Ansible version: $(ansible --version)"
+    if command -v ansible &> /dev/null; then
+        print_info "Ansible version: $(ansible --version)"
+    else
+        print_warning "Ansible is not installed"
+    fi
     echo "--------------------------------------"
-    print_info "Azure CLI version: $(az --version)"
+    if command -v az &> /dev/null; then
+        print_info "Azure CLI version: $(az --version)"
+    else
+        print_warning "Azure CLI is not installed"
+    fi
 }
 
 install_python() {
@@ -47,8 +61,16 @@ install_python() {
 }
 
 show_python_version() {
-    print_info "Python version: $(python3 --version)"
-    print_info "Pip version: $(pip3 --version)"
+    if command -v python3 &> /dev/null; then
+        print_info "Python version: $(python3 --version)"
+    else
+        print_warning "Python is not installed"
+    fi
+    if command -v pip3 &> /dev/null; then
+        print_info "Pip version: $(pip3 --version)"
+    else
+        print_warning "Pip is not installed"
+    fi
 }
 
 install_cookiecutter() {
@@ -82,15 +104,14 @@ install_ansible() {
         exit 1
     fi
     
-    if [[ $EUID -ne 0 ]]; then
-        #This script must be run as root
+    if [[ $EUID -eq 0 ]]; then
+        # Running as root: install system-wide
         python3 -m pip install ansible
-        export PATH=$PATH:/root/.local/bin
         export PYTHONPATH="${PYTHONPATH}:/root/.ansible/collections/ansible_collections"
     else
         python3 -m pip install --user ansible
         # add to PATH export PATH=$PATH:/home/marcio/.local/bin
-        export PATH=$PATH:$home_dir/.local/bin
+        export PATH=$PATH:"$home_dir/.local/bin"
         export PYTHONPATH="${PYTHONPATH}:$home_dir/.ansible/collections/ansible_collections"
     fi
 
@@ -99,6 +120,10 @@ install_ansible() {
 cmd_pip_install() {
     local name="$1"
     print_warning "Running pip install: $name"
+    if [[ -z "$name" ]]; then
+        print_error "No package name provided"
+        exit 1
+    fi
 
     # check that python3 and python3 -m pip -V are installed
     if ! command -v python3 &> /dev/null
@@ -112,12 +137,14 @@ cmd_pip_install() {
         print_error "pip3 is not installed. Run: dx install python"
         exit 1
     fi
-    
-    if [[ $EUID -ne 0 ]]; then
-        #This script must be run as root
-        python3 -m pip install $name
+
+    local packages=()
+    local IFS=' '
+    read -r -a packages <<< "$name"
+    if [[ $EUID -eq 0 ]]; then
+        python3 -m pip install "${packages[@]}"
     else
-        python3 -m pip install --user $name
+        python3 -m pip install --user "${packages[@]}"
     fi
 
 }
@@ -162,7 +189,7 @@ install_developer_tools() {
     fi
 
     print_warning "Installing python requirements"
-    python3 -m pip install -r $script_dir/requirements.txt
+    python3 -m pip install -r "$script_dir/requirements.txt"
 
     # check that ansible-galaxy is installed
     if ! command -v ansible-galaxy &> /dev/null
@@ -222,13 +249,13 @@ main() {
     done
 
     # Check if a command was passed
-    if [[ -z $command ]]; then
+    if [[ -z "$command" ]]; then
         usage
         exit 1
     fi
 
     # Execute the command
-    case $command in
+    case "$command" in
         show)
           shift
           command_show
