@@ -114,7 +114,7 @@ cmd_run(){
         verbosity+=("-$verbosity_arg")
     fi
 
-    print_warning "Running ansible: Playbook: $playbook_name, Inventory: $inventory_path, Verbosity: $verbosity"
+    print_warning "Running ansible: Playbook: $playbook_name, Inventory: $inventory_path, Verbosity: ${verbosity[*]}"
     
     load_config
     
