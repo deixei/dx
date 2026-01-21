@@ -240,9 +240,9 @@ generate_service_principal() {
     local app_id
     local tenant_id
     local client_secret
-    app_id=$(echo "$sp_output" | grep -oP '(?<="appId": ")[^"]+')
-    tenant_id=$(echo "$sp_output" | grep -oP '(?<="tenant": ")[^"]+')
-    client_secret=$(echo "$sp_output" | grep -oP '(?<="password": ")[^"]+')
+    app_id=$(echo "$sp_output" | jq -r '.appId')
+    tenant_id=$(echo "$sp_output" | jq -r '.tenant')
+    client_secret=$(echo "$sp_output" | jq -r '.password')
 
     print_warning "Service principal values:"
     # Print the values for verification
