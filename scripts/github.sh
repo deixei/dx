@@ -1,11 +1,20 @@
 #!/bin/bash
-set -euo pipefail
+set -e  # Exit on error
+if [ -n "${ZSH_VERSION-}" ]; then
+  setopt PIPE_FAIL
+elif [ -n "${BASH_VERSION-}" ]; then
+  set -o pipefail
+fi
 IFS=$'\n\t'
 
 subcommand="github"
 script_dir=$(dirname "$0")
 source "$script_dir/common.sh"
-trap 'print_error "Error on line $LINENO."' ERR
+if [ -n "${ZSH_VERSION-}" ]; then
+  trap 'print_error "Error on line $LINENO."' ZERR
+else
+  trap 'print_error "Error on line $LINENO."' ERR
+fi
 command=""
 name_arg=""
 

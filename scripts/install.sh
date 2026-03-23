@@ -1,12 +1,21 @@
 #!/bin/bash
-set -euo pipefail
+set -e  # Exit on error
+if [ -n "${ZSH_VERSION-}" ]; then
+  setopt PIPE_FAIL
+elif [ -n "${BASH_VERSION-}" ]; then
+  set -o pipefail
+fi
 IFS=$'\n\t'
 
 subcommand="install"
 
 script_dir=$(dirname "$0")
 source "$script_dir/common.sh"
-trap 'print_error "Error on line $LINENO."' ERR
+if [ -n "${ZSH_VERSION-}" ]; then
+  trap 'print_error "Error on line $LINENO."' ZERR
+else
+  trap 'print_error "Error on line $LINENO."' ERR
+fi
 command=""
 name_arg=""
 
@@ -140,7 +149,11 @@ cmd_pip_install() {
 
     local packages=()
     local IFS=' '
-    read -r -a packages <<< "$name"
+    if [ -n "${ZSH_VERSION-}" ]; then
+      read -r -A packages <<< "$name"
+    else
+      read -r -a packages <<< "$name"
+    fi
     if [[ $EUID -eq 0 ]]; then
         python3 -m pip install "${packages[@]}"
     else

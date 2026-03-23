@@ -1,5 +1,10 @@
 #!/bin/bash
-set -euo pipefail
+set -e  # Exit on error
+if [ -n "${ZSH_VERSION-}" ]; then
+  setopt PIPE_FAIL
+elif [ -n "${BASH_VERSION-}" ]; then
+  set -o pipefail
+fi
 IFS=$'\n\t'
 
 RED='\033[0;31m'
@@ -27,7 +32,11 @@ print_warning() {
     log_message "WARN" "$YELLOW" "$@"
 }
 
-trap 'print_error "Error on line $LINENO."' ERR
+if [ -n "${ZSH_VERSION-}" ]; then
+  trap 'print_error "Error on line $LINENO."' ZERR
+else
+  trap 'print_error "Error on line $LINENO."' ERR
+fi
 
 if [[ $EUID -ne 0 ]]; then
    print_error "This script must be run as root"

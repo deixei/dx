@@ -1,10 +1,19 @@
 #!/bin/bash
-set -euo pipefail
+set -e  # Exit on error
+if [ -n "${ZSH_VERSION-}" ]; then
+  setopt PIPE_FAIL
+elif [ -n "${BASH_VERSION-}" ]; then
+  set -o pipefail
+fi
 IFS=$'\n\t'
 
 script_dir=$(dirname "$0")
 source "$script_dir/scripts/common.sh"
-trap 'print_error "Error on line $LINENO."' ERR
+if [ -n "${ZSH_VERSION-}" ]; then
+  trap 'print_error "Error on line $LINENO."' ZERR
+else
+  trap 'print_error "Error on line $LINENO."' ERR
+fi
 
 folder_path="/tmp/repos/dxtools"
 command=""
@@ -88,6 +97,7 @@ usage() {
   echo "  venv              Virtual environment helper (define virtual env -v, activate -a, deactivate -d)"
   echo "  az                Azure CLI helper"
   echo "  cc                Cookiecutter helper"
+  echo "  tools             Manage developer tools (show, install, update)"
   echo
   print_info "More:"
   echo "  http://www.deixei.com"
@@ -100,7 +110,13 @@ me() {
   print_info "I am user $(whoami)"
   print_info "I am in $(pwd)"
   print_info "I am running on $(uname -a)"
-  print_info "I am using $(bash --version | head -n 1)"
+  if [ -n "${ZSH_VERSION-}" ]; then
+    print_info "I am using zsh $ZSH_VERSION"
+  elif [ -n "${BASH_VERSION-}" ]; then
+    print_info "I am using bash $BASH_VERSION"
+  else
+    print_info "I am using an unknown shell"
+  fi
 }
 
 define_virtual_env() {
@@ -135,7 +151,7 @@ activate_virtual_env() {
 
 deactivate_virtual_env() {
     print_warning "Deactivating virtual environment"
-    if [[ -n "${VIRTUAL_ENV:-}" ]] && declare -F deactivate >/dev/null; then
+    if [[ -n "${VIRTUAL_ENV:-}" ]] && type deactivate >/dev/null 2>&1; then
       deactivate
     else
       print_error "Virtual environment is not active"
@@ -216,6 +232,10 @@ case "$command" in
   cc)
     shift
     "$script_dir/scripts/cookiecutter.sh" "$@"
+    ;;
+  tools)
+    shift
+    "$script_dir/scripts/tools.sh" "$@"
     ;;
   venv)
     shift

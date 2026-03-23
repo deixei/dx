@@ -1,9 +1,21 @@
 #!/bin/bash
 # Avoid enforcing strict mode when sourced to prevent impacting the parent shell.
-if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
-  set -euo pipefail
+_running_directly=false
+if [ -n "${BASH_VERSION-}" ]; then
+  [ "${BASH_SOURCE[0]}" = "$0" ] && _running_directly=true
+elif [ -n "${ZSH_VERSION-}" ]; then
+  case "$ZSH_EVAL_CONTEXT" in *:file) ;; *) _running_directly=true ;; esac
+fi
+if [ "$_running_directly" = true ]; then
+  set -e  # Exit on error
+  if [ -n "${ZSH_VERSION-}" ]; then
+    setopt PIPE_FAIL
+  elif [ -n "${BASH_VERSION-}" ]; then
+    set -o pipefail
+  fi
   IFS=$'\n\t'
 fi
+unset _running_directly
 
 # TO use it: 
 # source ~/.dx/exporting_vars.sh 
@@ -11,8 +23,11 @@ fi
 
 home_dir="${HOME}"
 dxtools_path="/opt/dxtools"
-#script_dir=$(dirname "$0")
-script_dir=$(dirname "${BASH_SOURCE[0]}")
+if [ -n "${BASH_VERSION-}" ]; then
+  script_dir=$(dirname "${BASH_SOURCE[0]}")
+else
+  script_dir=$(dirname "$0")
+fi
 # Read the configuration file
 # ignore empty lines and lines starting with #
 # Extract sections and configurations
