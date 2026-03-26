@@ -283,7 +283,7 @@ tool_ripgrep_update()  { _ensure_sudo && sudo apt-get update && sudo apt-get ins
 
 # --- liquibase ---
 tool_liquibase_check()   { command -v liquibase &>/dev/null; }
-tool_liquibase_version() { liquibase --version 2>/dev/null | head -1; }
+tool_liquibase_version() { liquibase --version 2>&1 | grep -i "Liquibase Version:" | awk '{print $NF}'; }
 tool_liquibase_install() {
   print_info "Installing Liquibase Community CLI..."
   _ensure_sudo
@@ -294,29 +294,43 @@ tool_liquibase_install() {
   fi
   
   local install_dir="/opt/liquibase"
-  local release_url="https://api.github.com/repos/liquibase/liquibase/releases/latest"
+  local temp_dir
+  temp_dir=$(mktemp -d)
   
-  print_info "Fetching latest Liquibase release..."
-  local download_url
-  download_url=$(curl -s "$release_url" | grep -o '"browser_download_url".*liquibase-[0-9.]*\.tar\.gz' | head -1 | cut -d'"' -f4)
-  
-  if [[ -z "$download_url" ]]; then
-    print_error "Could not find Liquibase release URL"
+  print_info "Downloading Liquibase v5.0.2..."
+  if ! curl --connect-timeout 5 -fsSL "https://github.com/liquibase/liquibase/releases/download/v5.0.2/liquibase-5.0.2.tar.gz" -o "$temp_dir/liquibase.tar.gz"; then
+    print_warning "Could not fetch from GitHub, trying apt..."
+    if apt-cache search liquibase 2>/dev/null | grep -q '^liquibase'; then
+      sudo apt-get update && sudo apt-get install -y liquibase
+      rm -rf "$temp_dir"
+      return 0
+    fi
+    print_error "Could not find or download Liquibase"
+    rm -rf "$temp_dir"
     return 1
   fi
   
-  print_info "Downloading from: $download_url"
-  local temp_dir
-  temp_dir=$(mktemp -d)
-  curl -fsSL "$download_url" -o "$temp_dir/liquibase.tar.gz"
-  
+  sudo rm -rf "$install_dir"
   sudo mkdir -p "$install_dir"
-  sudo tar -xzf "$temp_dir/liquibase.tar.gz" -C "$install_dir" --strip-components=1
-  sudo chmod +x "$install_dir/liquibase"
+  sudo tar -xzf "$temp_dir/liquibase.tar.gz" -C "$install_dir"
   
-  # Create symlink in /usr/local/bin
-  sudo ln -sf "$install_dir/liquibase" /usr/local/bin/liquibase
+  # Create wrapper script
+  sudo tee /usr/local/bin/liquibase > /dev/null << 'LQSCRIPT'
+#!/bin/bash
+LIQUIBASE_HOME="/opt/liquibase"
+LIQUIBASE_JAR="$LIQUIBASE_HOME/lib/liquibase-core.jar"
+if [[ ! -f "$LIQUIBASE_JAR" ]]; then
+  echo "Error: Liquibase JAR not found at $LIQUIBASE_JAR"
+  exit 1
+fi
+CLASSPATH="$LIQUIBASE_JAR"
+for jar in "$LIQUIBASE_HOME"/lib/*.jar; do
+  CLASSPATH="$CLASSPATH:$jar"
+done
+exec java -cp "$CLASSPATH" liquibase.integration.commandline.LiquibaseCommandLine "$@"
+LQSCRIPT
   
+  sudo chmod +x /usr/local/bin/liquibase
   rm -rf "$temp_dir"
   print_success "Liquibase installed to $install_dir"
 }
