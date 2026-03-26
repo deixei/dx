@@ -29,7 +29,7 @@ usage() {
   echo
   print_info "Commands:"
   echo "  show              Show all managed tools with status and version"
-  echo "  install all       Install all missing tools"
+  echo "  install all       Install missing tools and update installed ones"
   echo "  install <name>    Install a specific tool"
   echo "  update all        Update all installed tools"
   echo "  update <name>     Update a specific tool"
@@ -81,15 +81,43 @@ command_show() {
 command_install() {
   local target="$1"
   if [[ "$target" == "all" ]]; then
+    local installed_count=0
+    local updated_count=0
+    local installed_now_count=0
+    local failed_count=0
+    local failed_tools=""
+
     for name in $MANAGED_TOOLS; do
       if ! tool_check "$name"; then
         print_info "Installing $name..."
-        tool_install "$name"
-        print_success "$name installed"
+        if tool_install "$name" 2>&1; then
+          print_success "$name installed"
+          installed_now_count=$((installed_now_count + 1))
+        else
+          print_error "$name installation failed (continuing...)"
+          failed_tools="$failed_tools $name"
+          failed_count=$((failed_count + 1))
+        fi
       else
-        print_success "$name is already installed"
+        installed_count=$((installed_count + 1))
+        print_info "$name is already installed, updating..."
+        if tool_update "$name" 2>&1; then
+          print_success "$name updated"
+          updated_count=$((updated_count + 1))
+        else
+          print_error "$name update failed (continuing...)"
+          failed_tools="$failed_tools $name"
+          failed_count=$((failed_count + 1))
+        fi
       fi
     done
+
+    echo
+    print_info "Summary: installed $installed_now_count, updated $updated_count, already present $installed_count, failed $failed_count"
+    if [[ $failed_count -gt 0 ]]; then
+      print_warning "Failed tools:$failed_tools"
+      print_info "Run 'dx tools install <name>' to retry individually"
+    fi
   else
     _validate_tool_name "$target" || return 1
     if ! tool_check "$target"; then
@@ -97,7 +125,9 @@ command_install() {
       tool_install "$target"
       print_success "$target installed"
     else
-      print_success "$target is already installed"
+      print_info "$target is already installed, updating..."
+      tool_update "$target"
+      print_success "$target updated"
     fi
   fi
 }

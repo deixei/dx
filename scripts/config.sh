@@ -334,8 +334,6 @@ main() {
     # Execute the command
     case "$command" in
         show)
-          shift
-
           if [[ -z "$output_arg" ]]; then
             print_info "Default configurations"
             cat_local_config
@@ -364,7 +362,6 @@ main() {
 
           ;;
         init)
-          shift
           init
 
           cat_config
@@ -372,7 +369,6 @@ main() {
           set_bashrc
           ;;
         sp)
-          shift
           if [[ -z "$name_arg" ]]; then
               print_error "Error: Missing name argument (--name or -n)"
               exit 1
@@ -386,7 +382,6 @@ main() {
           generate_service_principal "$name_arg" "$key_arg"
           ;;
         set)
-          shift
           if [[ -z "$key_arg" ]]; then
               print_error "Error: Missing key argument (--key or -k)"
               exit 1
@@ -401,7 +396,6 @@ main() {
           cat_config
           ;;
         az)
-            shift
             # load the configuration
             load_config
 
@@ -441,8 +435,6 @@ main() {
             az_config "$AZURE_TENANT" "$AZURE_CLIENT_ID" "$AZURE_SECRET"
             ;;
         git)
-            shift
-
             load_config
 
             if [[ -z "$name_arg" ]]; then

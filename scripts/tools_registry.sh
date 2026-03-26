@@ -18,7 +18,8 @@ yq
 python
 ansible
 dotnet-ef
-ripgrep"
+ripgrep
+liquibase"
 
 # Helper: map tool name to function prefix (hyphens to underscores)
 _tool_func_prefix() {
@@ -92,12 +93,20 @@ tool_dotnet_update() { tool_dotnet_install; }
 tool_node_check()   { command -v node &>/dev/null; }
 tool_node_version() { node --version 2>/dev/null; }
 tool_node_install() {
-  print_info "Installing Node.js via NodeSource..."
+  print_info "Installing Node.js..."
   _ensure_sudo
-  curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-  sudo apt-get install -y nodejs
+  
+  # Try NodeSource (latest LTS) first
+  if curl -fsSL --connect-timeout 5 https://deb.nodesource.com/setup_lts.x 2>/dev/null | sudo -E bash - 2>/dev/null; then
+    print_info "Using NodeSource repository..."
+    sudo apt-get install -y nodejs
+  else
+    # Fallback to Ubuntu repos if NodeSource fails (e.g., firewall/Zscaler blocking)
+    print_warning "NodeSource unavailable, using Ubuntu repos..."
+    sudo apt-get update && sudo apt-get install -y nodejs npm
+  fi
 }
-tool_node_update() { _ensure_sudo && sudo apt-get update && sudo apt-get install --only-upgrade -y nodejs; }
+tool_node_update() { _ensure_sudo && sudo apt-get update && sudo apt-get install --only-upgrade -y nodejs npm; }
 
 # --- terraform ---
 tool_terraform_check()   { command -v terraform &>/dev/null; }
@@ -205,7 +214,7 @@ tool_jq_update()  { _ensure_sudo && sudo apt-get update && sudo apt-get install 
 
 # --- yq ---
 tool_yq_check()   { command -v yq &>/dev/null; }
-tool_yq_version() { yq --version 2>/dev/null; }
+tool_yq_version() { yq eval --version 2>/dev/null || yq --version 2>/dev/null | head -1; }
 tool_yq_install() {
   _ensure_sudo
   if command -v snap &>/dev/null; then
@@ -233,27 +242,13 @@ tool_ansible_check()   { command -v ansible &>/dev/null; }
 tool_ansible_version() { ansible --version 2>/dev/null | head -1; }
 tool_ansible_install() {
   print_info "Installing Ansible..."
-  if ! command -v python3 &>/dev/null; then
-    print_error "python3 is required. Install it first: dx tools install python"
-    return 1
-  fi
-  if ! command -v pip3 &>/dev/null; then
-    print_error "pip3 is required. Install it first: dx tools install python"
-    return 1
-  fi
-  if [[ $EUID -eq 0 ]]; then
-    python3 -m pip install ansible
-  else
-    python3 -m pip install --user ansible
-    export PATH="$PATH:$HOME/.local/bin"
-  fi
+  _ensure_sudo
+  # Use apt (respects PEP 668 on Ubuntu 24.04+); installs both ansible and ansible-core
+  sudo apt-get update && sudo apt-get install -y ansible
 }
 tool_ansible_update() {
-  if [[ $EUID -eq 0 ]]; then
-    python3 -m pip install --upgrade ansible
-  else
-    python3 -m pip install --user --upgrade ansible
-  fi
+  _ensure_sudo
+  sudo apt-get update && sudo apt-get install --only-upgrade -y ansible
 }
 
 # --- dotnet-ef ---
@@ -285,3 +280,47 @@ tool_ripgrep_check()   { command -v rg &>/dev/null; }
 tool_ripgrep_version() { rg --version 2>/dev/null | head -1; }
 tool_ripgrep_install() { _ensure_sudo && sudo apt-get update && sudo apt-get install -y ripgrep; }
 tool_ripgrep_update()  { _ensure_sudo && sudo apt-get update && sudo apt-get install --only-upgrade -y ripgrep; }
+
+# --- liquibase ---
+tool_liquibase_check()   { command -v liquibase &>/dev/null; }
+tool_liquibase_version() { liquibase --version 2>/dev/null | head -1; }
+tool_liquibase_install() {
+  print_info "Installing Liquibase Community CLI..."
+  _ensure_sudo
+  
+  if ! command -v java &>/dev/null; then
+    print_error "Java is required. Installing default JRE..."
+    sudo apt-get update && sudo apt-get install -y default-jre
+  fi
+  
+  local install_dir="/opt/liquibase"
+  local release_url="https://api.github.com/repos/liquibase/liquibase/releases/latest"
+  
+  print_info "Fetching latest Liquibase release..."
+  local download_url
+  download_url=$(curl -s "$release_url" | grep -o '"browser_download_url".*liquibase-[0-9.]*\.tar\.gz' | head -1 | cut -d'"' -f4)
+  
+  if [[ -z "$download_url" ]]; then
+    print_error "Could not find Liquibase release URL"
+    return 1
+  fi
+  
+  print_info "Downloading from: $download_url"
+  local temp_dir
+  temp_dir=$(mktemp -d)
+  curl -fsSL "$download_url" -o "$temp_dir/liquibase.tar.gz"
+  
+  sudo mkdir -p "$install_dir"
+  sudo tar -xzf "$temp_dir/liquibase.tar.gz" -C "$install_dir" --strip-components=1
+  sudo chmod +x "$install_dir/liquibase"
+  
+  # Create symlink in /usr/local/bin
+  sudo ln -sf "$install_dir/liquibase" /usr/local/bin/liquibase
+  
+  rm -rf "$temp_dir"
+  print_success "Liquibase installed to $install_dir"
+}
+tool_liquibase_update() {
+  print_info "Updating Liquibase Community CLI..."
+  tool_liquibase_install
+}
